@@ -9,7 +9,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-#define MAX_MSG_LEN 64
+#define MAX_MSG_LEN 128
 void *send_msg_handler(void *sockfd);
 void *recv_msg_handler(void *sockfd);
 volatile sig_atomic_t flag = 0;
@@ -119,23 +119,31 @@ void *recv_msg_handler(void *sockfd) {
     
     int socket = *(int*) sockfd;
 	int msg_len;
-    char msg[MAX_MSG_LEN];
-    memset(msg, 0, MAX_MSG_LEN);
-	while ((msg_len = recv(socket, msg, MAX_MSG_LEN, 0)) > 0) {
-        char msg_type[5];
-        msg[msg_len] = '\0';
-        strncpy(msg_type, &msg[0], 4);
-        msg_type[4] = '\0';
-        if (!strcmp(msg_type, "MATC")) {
-            char send_msg[MAX_MSG_LEN] = "PLAY";
-            send(socket, send_msg, strlen(send_msg), 0);
-            bzero(send_msg, MAX_MSG_LEN);
-        }
+    char message[MAX_MSG_LEN];
+    memset(message, 0, MAX_MSG_LEN);
+	while ((msg_len = recv(socket, message, MAX_MSG_LEN, 0)) > 0) {
+        char * msg = strtok(message, "\n");
         
-        printf("\nFROM SERVER: %s\n", msg);
-        fflush(stdout);
+        while( msg != NULL ) {
+            
+            char msg_type[5];
+            msg[msg_len] = '\0';
+            strncpy(msg_type, &msg[0], 4);
+            msg_type[4] = '\0';
+            if (!strcmp(msg_type, "MATC")) {
+                char send_msg[MAX_MSG_LEN] = "PLAY";
+                send(socket, send_msg, strlen(send_msg), 0);
+                bzero(send_msg, MAX_MSG_LEN);
+            }
+            
+            printf("\nFROM SERVER: %s\n", msg);
+            fflush(stdout);
+            msg = strtok(NULL, "\n");
 
-        bzero(msg, MAX_MSG_LEN);
+        }
+
+        bzero(message, MAX_MSG_LEN);
+        
     }
     pthread_exit(NULL);
 	return 0;
