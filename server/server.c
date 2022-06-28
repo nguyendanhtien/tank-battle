@@ -231,6 +231,8 @@ void *run_game(void *room_info) {
                             if (msg_len > 0) {
                                 send_client_msg(pfds[(i + 1) % 2].fd, "\nENDS:WINA");
                                 send_client_msg(pfds[(i + 1) % 2].fd, "\nHOME");
+                            } else {
+                                printf("[DEBUG]Player %d disconnected.\n", pfds[(i + 1) % 2].fd);
                             }
                             gameend = 1;
                             break;
