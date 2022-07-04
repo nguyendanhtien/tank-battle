@@ -130,8 +130,8 @@ void *recv_msg_handler(void *sockfd) {
             msg[msg_len] = '\0';
             strncpy(msg_type, &msg[0], 4);
             msg_type[4] = '\0';
-            if (!strcmp(msg_type, "MATC")) {
-                char send_msg[MAX_MSG_LEN] = "PLAY";
+            if (!strcmp(msg_type, "PLAY")) {
+                char send_msg[MAX_MSG_LEN] = "PLAY:OK";
                 send(socket, send_msg, strlen(send_msg), 0);
                 bzero(send_msg, MAX_MSG_LEN);
             }

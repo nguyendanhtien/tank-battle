@@ -546,6 +546,7 @@ int matching_request_handler(char *message, int msg_len, int socket) {
             
             sprintf(send_message, "MATC:%d-1", room_id);
             send_client_msg(client1, send_message);
+            send_clients_msg(client1, socket, "\nPLAY");
         } else {
             printf("[DEBUG]No available room with id: %d.\n", room_id);
             send_client_msg(socket, "JOIN:FAIL");
@@ -573,7 +574,7 @@ int matching_request_handler(char *message, int msg_len, int socket) {
 
     } else if (!strcmp(msg_type, "PLAY")) {
 
-        send_client_msg(socket, "PLAY:OK");
+        printf("[DEBUG]GAME START\n");
 
         return 1;
 
