@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class bullet : MonoBehaviour
+public class Bullet : MonoBehaviour
 {
     public float speed;
     public float timetoDestroy;
@@ -23,5 +23,14 @@ public class bullet : MonoBehaviour
     void Update()
     {
         m_rb.AddForce(m_rb.transform.up* speed);
+        // if(transform.position.y >160){
+        //     Destroy(gameObject);
+        // }
+    }
+
+    private void OnCollisionEnter2D(Collision2D col) {
+        if(col.gameObject.CompareTag("StaticObject")){
+            Destroy(gameObject);
+        }
     }
 }

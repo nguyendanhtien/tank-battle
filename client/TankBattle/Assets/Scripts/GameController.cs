@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    int m_hp, m_attack, m_roomID;
+    int m_roomID;
     bool m_isGameOver;
+    float m_timeRemain= 300;
     UIManager m_ui;
+    Tank player1;
     // Start is called before the first frame update
     void Start()
     {
@@ -17,7 +19,8 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        m_timeRemain -= Time.deltaTime;
+        m_ui.SetTimeText(m_timeRemain);
     }
 
 
@@ -41,6 +44,12 @@ public class GameController : MonoBehaviour
     public void StartGame(){
         m_ui.ShowHomeGUI(false);
         m_ui.ShowGamePlayGUI(true);
+        player1 = FindObjectOfType<Tank>();
+
+    }
+
+    public Tank getPlayer(){
+        return player1;
     }
 
 }

@@ -4,14 +4,17 @@ using UnityEngine;
 
 public class Tank : MonoBehaviour
 {
-    private float moveSpeed = 4, rotationSpeed = 50, move, rotation;
-    public GameObject bullet;
-    public Transform shootingPoint, pos2, pos3;
+    private int m_hp, m_attack;
+    private float moveSpeed = 4, rotationSpeed = 50, move, rotation, powerEllapse;
+    public GameObject bullet, bulletLv2;
+    public Transform shootingPoint,shootingPointLv2, pos2, pos3;
     float xDirection, yDirection;
     // Start is called before the first frame update
     void Start()
     {
-        
+        m_attack= 1;
+        m_hp = 50;
+        powerEllapse = 0;
     }
 
     // Update is called once per frame
@@ -27,10 +30,15 @@ public class Tank : MonoBehaviour
         rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
 
         // transform.position += new Vector3(xmoveStep, ymoveStep,0);
+        if(powerEllapse >0)
+            powerEllapse -= Time.deltaTime;
 
         if(Input.GetKeyDown(KeyCode.Space)){
-            Shoot();
-            // Instantiate(projectile, shootingPoint.position, shootingPoint.rotation);
+            if(powerEllapse >0){
+                ShootLv2();
+            } else{
+                Shoot();
+            }         
         }
 
         // if(xDirection == 1){
@@ -50,6 +58,12 @@ public class Tank : MonoBehaviour
         }
     }
 
+    public void ShootLv2(){
+        if(bulletLv2 && shootingPointLv2){
+            Instantiate(bulletLv2, shootingPointLv2.position, shootingPointLv2.rotation);
+        }
+    }
+
     public void Shoot3(){
         if(bullet && shootingPoint){
             Instantiate(bullet, shootingPoint.position, shootingPoint.rotation);
@@ -58,5 +72,17 @@ public class Tank : MonoBehaviour
             Instantiate(bullet, pos2.position, pos2.rotation);
             Instantiate(bullet, pos3.position, pos3.rotation);
         }
+    }
+
+    public void IncreaseHP(int num){
+        m_hp += num;
+    }
+
+    public void gotHit(){
+        
+    }
+
+    public void EatBulletItem(){
+        powerEllapse += 10;
     }
 }

@@ -5,13 +5,22 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-    public Text RoomIDText, hpText, atkText;
+    public Text RoomIDText, hpText, atkText, timeText;
     public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI;
 
 
     public void SetRoomIDText(string txt){
         if(RoomIDText){
             RoomIDText.text = txt;
+        }
+    }
+
+    public void SetTimeText(float num){
+        if(timeText){
+            if(num >=0){
+                string txt = ((int)num/60) +":" +(int)(num - ((int)num/60 )*60);
+                timeText.text = txt;
+            } else timeText.text = "0:0";
         }
     }
     public void ShowHomeGUI(bool isShow){
