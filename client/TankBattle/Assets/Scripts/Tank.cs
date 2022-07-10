@@ -25,7 +25,6 @@ public class Tank : MonoBehaviour
 
         // float xmoveStep = moveSpeed*xDirection*Time.deltaTime;
         // float ymoveStep = moveSpeed*yDirection*Time.deltaTime;
-
         move = Input.GetAxis("Vertical") *moveSpeed * Time.deltaTime;
         rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
 
@@ -40,7 +39,8 @@ public class Tank : MonoBehaviour
                 Shoot();
             }         
         }
-
+        // Debug.Log($"{transform.position.x}-{transform.position.y}-{transform.rotation.z}");
+        NetworkController.instance.sendMoveData(transform.position.x, transform.position.y, transform.rotation.z);
         // if(xDirection == 1){
         //     transform.Rotate(-Vector3.forward*180*Time.deltaTime);
         // }else if(xDirection == -1)
