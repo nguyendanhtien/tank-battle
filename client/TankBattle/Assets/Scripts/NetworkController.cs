@@ -17,6 +17,8 @@ public class NetworkController : MonoBehaviour
     private Stream stream;
     public static NetworkController instance;
 
+    private GameController gameController;
+    
     void Awake()
 	{
 		if (instance == null)
@@ -35,6 +37,7 @@ public class NetworkController : MonoBehaviour
             TcpClient client = new TcpClient();
             client.Connect(address, PORT_NUMBER);
             stream = client.GetStream();
+            StartCoroutine(GetAcceptConnection());
             Debug.Log("Connected");
         }
         catch (Exception ex)
@@ -56,5 +59,59 @@ public class NetworkController : MonoBehaviour
         Debug.Log(strData);
         byte[] data=encoding.GetBytes(strData);
         stream.Write(data,0,data.Length);
+    }
+
+    public int sendCreateRoomRequest() {
+        StringWriter strWriter = new StringWriter();
+        strWriter.Write("CREA");
+        string strData = strWriter.ToString();
+        Debug.Log(strData);
+        byte[] data=encoding.GetBytes(strData);
+        stream.Write(data,0,data.Length);
+        // Waiting for data
+        int roomId = 0;
+        StartCoroutine(GetRoomId((roomIdFromServer) => {
+            roomId = roomIdFromServer;
+            Debug.Log($"Server: {roomId}");
+            
+        }));
+        return roomId;
+    }
+
+    public void sendJoinRoomRequest(int roomId) {
+        StringWriter strWriter = new StringWriter();
+        strWriter.Write($"JOIN:{roomId}");
+        string strData = strWriter.ToString();
+        Debug.Log(strData);
+        byte[] data=encoding.GetBytes(strData);
+        stream.Write(data,0,data.Length);
+    }
+
+    IEnumerator GetRoomId(System.Action<int> callbackOnFinish) {
+        yield return new WaitForSeconds(Time.deltaTime);
+        // Receive data
+        byte[] data = new byte[BUFFER_SIZE];
+        stream.Read(data,0,BUFFER_SIZE);
+        string strData = encoding.GetString(data);
+        // Read data
+        StringReader strReader = new StringReader(strData.Substring(5));
+        // Process room id
+        int roomId = Int16.Parse(strReader.ReadLine());
+        // Debug.Log($"Server: {roomId}");
+        callbackOnFinish(roomId);
+        
+    }
+
+    IEnumerator GetAcceptConnection() {
+        yield return new WaitForSeconds(Time.deltaTime);
+        // Receive data
+        byte[] data = new byte[BUFFER_SIZE];
+        stream.Read(data,0,BUFFER_SIZE);
+        string strData = encoding.GetString(data);
+        // Read data
+        StringReader strReader = new StringReader(strData.Substring(5));
+    
+        Debug.Log($"Server: {strData}");
+        
     }
 }

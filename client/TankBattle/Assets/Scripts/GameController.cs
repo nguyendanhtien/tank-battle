@@ -26,6 +26,8 @@ public class GameController : MonoBehaviour
 
     public void CreateRoom(){
         m_ui.ShowHomeGUI(false);
+        int roomId = NetworkController.instance.sendCreateRoomRequest();
+        Debug.Log($"OUT: {roomId}");
         m_ui.ShowCreateRoomGUI(true);
     }
 
