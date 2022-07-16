@@ -17,8 +17,8 @@ public class NetworkController : MonoBehaviour
     private Stream stream;
     public static NetworkController instance;
 
-    private GameController gameController;
-    
+    UIManager m_ui;
+
     void Awake()
 	{
 		if (instance == null)
@@ -30,14 +30,17 @@ public class NetworkController : MonoBehaviour
 
     // Start is called before the first frame update
     void Start()
-    {
+    {   
+        m_ui = FindObjectOfType<UIManager>();
         try
         {
             IPAddress address = IPAddress.Parse(ipServer);
             TcpClient client = new TcpClient();
             client.Connect(address, PORT_NUMBER);
             stream = client.GetStream();
-            StartCoroutine(GetAcceptConnection());
+            StartCoroutine(GetServerMessage((message) => {
+                LogMessageFromServer(message);
+            }));
             Debug.Log("Connected");
         }
         catch (Exception ex)
@@ -61,7 +64,7 @@ public class NetworkController : MonoBehaviour
         stream.Write(data,0,data.Length);
     }
 
-    public int sendCreateRoomRequest() {
+    public void sendCreateRoomRequest() {
         StringWriter strWriter = new StringWriter();
         strWriter.Write("CREA");
         string strData = strWriter.ToString();
@@ -72,10 +75,23 @@ public class NetworkController : MonoBehaviour
         int roomId = 0;
         StartCoroutine(GetRoomId((roomIdFromServer) => {
             roomId = roomIdFromServer;
-            Debug.Log($"Server: {roomId}");
-            
+            LogMessageFromServer(roomId.ToString());
+            m_ui.ShowCreateRoomGUI(true, roomId);
         }));
-        return roomId;
+    }
+
+    public void sendCancelWaitingRequest() {
+        StringWriter strWriter = new StringWriter();
+        strWriter.Write("DROP");
+        string strData = strWriter.ToString();
+        Debug.Log(strData);
+        byte[] data=encoding.GetBytes(strData);
+        stream.Write(data,0,data.Length);
+        // Waiting for data
+        StartCoroutine(GetServerMessage((message) => {
+            LogMessageFromServer(message);
+            m_ui.ShowHomeGUI(true);
+        }));
     }
 
     public void sendJoinRoomRequest(int roomId) {
@@ -102,7 +118,7 @@ public class NetworkController : MonoBehaviour
         
     }
 
-    IEnumerator GetAcceptConnection() {
+    IEnumerator GetServerMessage(System.Action<string> callbackOnFinish) {
         yield return new WaitForSeconds(Time.deltaTime);
         // Receive data
         byte[] data = new byte[BUFFER_SIZE];
@@ -110,8 +126,11 @@ public class NetworkController : MonoBehaviour
         string strData = encoding.GetString(data);
         // Read data
         StringReader strReader = new StringReader(strData.Substring(5));
-    
-        Debug.Log($"Server: {strData}");
+        callbackOnFinish(strData);
         
+    }
+
+    public void LogMessageFromServer(string message) {
+        Debug.Log($"Server: {message}");
     }
 }

@@ -26,9 +26,8 @@ public class GameController : MonoBehaviour
 
     public void CreateRoom(){
         m_ui.ShowHomeGUI(false);
-        int roomId = NetworkController.instance.sendCreateRoomRequest();
-        Debug.Log($"OUT: {roomId}");
-        m_ui.ShowCreateRoomGUI(true);
+        NetworkController.instance.sendCreateRoomRequest();
+        // m_ui.ShowCreateRoomGUI(true);
     }
 
     public void JoinRoom(){
@@ -41,6 +40,13 @@ public class GameController : MonoBehaviour
         m_ui.ShowCreateRoomGUI(false);
         m_ui.ShowGamePlayGUI(false);
         m_ui.ShowHomeGUI(true);
+    }
+
+    public void BackHomeFromCreate(){
+        m_ui.ShowJoinRoomGUI(false);
+        m_ui.ShowCreateRoomGUI(false);
+        m_ui.ShowGamePlayGUI(false);
+        NetworkController.instance.sendCancelWaitingRequest();
     }
 
     public void StartGame(){

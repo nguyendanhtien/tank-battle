@@ -34,6 +34,13 @@ public class UIManager : MonoBehaviour
             createRoomGUI.SetActive(isShow);
     }
 
+    public void ShowCreateRoomGUI(bool isShow, int roomId){
+        if(createRoomGUI) {
+            createRoomGUI.SetActive(isShow);
+            SetRoomIDText($"Your room ID is: {roomId}");
+        }
+    }
+
     public void ShowJoinRoomGUI(bool isShow){
         if(joinRoomGUI)
             joinRoomGUI.SetActive(isShow);
