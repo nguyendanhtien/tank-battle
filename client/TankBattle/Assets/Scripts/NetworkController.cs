@@ -6,9 +6,11 @@ using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NetworkController : MonoBehaviour
 {
+  
     [SerializeField]
     private string ipServer;
     private const int BUFFER_SIZE=1024;
@@ -92,6 +94,13 @@ public class NetworkController : MonoBehaviour
             LogMessageFromServer(message);
             m_ui.ShowHomeGUI(true);
         }));
+    }
+
+    public void joinRoom() {
+        int roomId = m_ui.GetRoomId();
+        if (roomId != -1) {
+            sendJoinRoomRequest(roomId);
+        }
     }
 
     public void sendJoinRoomRequest(int roomId) {

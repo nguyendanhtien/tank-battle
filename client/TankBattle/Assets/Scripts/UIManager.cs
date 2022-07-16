@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class UIManager : MonoBehaviour
 {
-    public Text RoomIDText, hpText, atkText, timeText;
+    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText;
     public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI;
 
 
@@ -22,6 +23,16 @@ public class UIManager : MonoBehaviour
                 timeText.text = txt;
             } else timeText.text = "0:0";
         }
+    }
+
+    public int GetRoomId() {
+        if (inputRoomIdText.text != "") {
+            int roomId = Int32.Parse(inputRoomIdText.text);
+            return roomId;        
+        }
+        Debug.Log("No input");
+        return -1;
+        
     }
     public void ShowHomeGUI(bool isShow){
         if(HomeGUI)
