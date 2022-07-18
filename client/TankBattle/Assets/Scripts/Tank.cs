@@ -10,11 +10,13 @@ public class Tank : MonoBehaviour
     public Transform shootingPoint,shootingPointLv2, pos2, pos3;
     float xDirection, yDirection;
     // Start is called before the first frame update
+    protected int id;
     void Start()
     {
         m_attack= 1;
         m_hp = 50;
         powerEllapse = 0;
+        id = 1;
     }
 
     // Update is called once per frame
@@ -26,20 +28,24 @@ public class Tank : MonoBehaviour
         // float xmoveStep = moveSpeed*xDirection*Time.deltaTime;
         // float ymoveStep = moveSpeed*yDirection*Time.deltaTime;
 
-        move = Input.GetAxis("Vertical") *moveSpeed * Time.deltaTime;
-        rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
+        if(id == 1){
+            move = Input.GetAxis("Vertical") *moveSpeed * Time.deltaTime;
+            rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
 
-        // transform.position += new Vector3(xmoveStep, ymoveStep,0);
-        if(powerEllapse >0)
-            powerEllapse -= Time.deltaTime;
+            // transform.position += new Vector3(xmoveStep, ymoveStep,0);
+            if(powerEllapse >0)
+                powerEllapse -= Time.deltaTime;
 
-        if(Input.GetKeyDown(KeyCode.Space)){
-            if(powerEllapse >0){
-                ShootLv2();
-            } else{
-                Shoot();
-            }         
+            if(Input.GetKeyDown(KeyCode.Space)){
+                if(powerEllapse >0){
+                    ShootLv2();
+                } else{
+                    Shoot();
+                }         
+            }
         }
+
+        
 
         // if(xDirection == 1){
         //     transform.Rotate(-Vector3.forward*180*Time.deltaTime);
@@ -50,6 +56,10 @@ public class Tank : MonoBehaviour
     private void LateUpdate() {
         transform.Translate(0, move, 0);
         transform.Rotate(0,0,rotation);
+    }
+
+    public void Move(){
+
     }
 
     public void Shoot(){

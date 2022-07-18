@@ -8,7 +8,10 @@ public class GameController : MonoBehaviour
     bool m_isGameOver;
     float m_timeRemain= 300;
     UIManager m_ui;
-    Tank player1;
+    public HPItem hp1;
+    public BulletLv2Item bullet1;
+    public Tank player1;
+    public Enemy  enemy;
     // Start is called before the first frame update
     void Start()
     {
@@ -41,11 +44,41 @@ public class GameController : MonoBehaviour
         m_ui.ShowHomeGUI(true);
     }
 
+
     public void StartGame(){
         m_ui.ShowHomeGUI(false);
         m_ui.ShowGamePlayGUI(true);
-        player1 = FindObjectOfType<Tank>();
+        // player1 = FindObjectOfType<Tank>();
+        renderItems("111111");
+        renderPlayer(-7.5f, -3.5f,0,   7.25f,2.35f,180);
+    }
 
+    public void  renderItems(string itemState){
+        // Vector2 pos1 = new Vector2(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f));
+        // // if(hp1){
+        //     Instantiate(hp1, pos1, Quaternion.identity);
+        if(itemState[0] == '1')
+            Instantiate(hp1, new Vector2(7.49f, -3.13f), Quaternion.identity);
+        if(itemState[1] == '1')
+            Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
+        if(itemState[2] == '1')
+            Instantiate(hp1, new Vector2(-7.93f, -1.29f), Quaternion.identity);
+
+        if(itemState[3] == '1')
+            Instantiate(bullet1, new Vector2(-7.57f, 3.07f), Quaternion.identity);
+        if(itemState[4] == '1')
+            Instantiate(bullet1, new Vector2(8.05f, -1.24f), Quaternion.identity);
+        if(itemState[5] == '1')
+            Instantiate(bullet1, new Vector2(0.16f, 0.54f), Quaternion.identity);
+    }
+
+    public void renderPlayer(float posX1, float posY1, float rotation1, float posX2, float posY2, float rotation2){
+        Instantiate(player1, new Vector2(posX1, posY1), Quaternion.Euler(0,0,rotation1));
+
+        Vector2 posEnemy = new Vector2(posX2, posY2);
+            Instantiate(enemy, posEnemy, Quaternion.Euler(0,0,rotation2));
+
+        
     }
 
     public Tank getPlayer(){
