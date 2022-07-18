@@ -6,7 +6,9 @@ struct Room* newNode(int roomId, int client_id)
 {
     struct Room* temp = (struct Room*)malloc(sizeof(struct Room));
     temp->key = roomId;
-    temp->is_ready = 0;
+    temp->is_matched = 0;
+    temp->is_client1_ready = 0;
+    temp->is_client2_ready = 0;
     temp->is_start = 0;
     temp->client1 = client_id;
     temp->prev = NULL;
@@ -87,6 +89,34 @@ int s_delete_node(struct S_Queue* q, int client)
             roomId = temp->key;
             free(temp);
             return roomId;
+        }
+        temp = temp->next;
+    }
+
+    return 0;
+}
+
+int s_delete_node_by_room_id(struct S_Queue* q, int room_id)
+{   
+    struct Room* temp = q->front;
+    struct Room* prev = (struct Room*)malloc(sizeof(struct Room));
+    prev = NULL;
+    while (temp != NULL) {
+        // printf("Room: %d", temp->key);
+        if (temp->key == room_id) {
+            prev = temp;
+            if (temp->prev != NULL) {
+                temp->prev->next = temp->next;
+            } else {
+                q->front = temp->next;
+            }
+            if (temp->next != NULL) {
+                temp->next->prev = temp->prev;
+            } else {
+                q->rear = temp->prev;
+            }
+            free(temp);
+            return 1;
         }
         temp = temp->next;
     }

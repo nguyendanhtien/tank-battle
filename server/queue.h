@@ -3,8 +3,10 @@
 
 struct Room {
     int key;
-    int is_ready;
+    int is_matched;
     int is_start;
+    int is_client1_ready;
+    int is_client2_ready;
     int client1;
     int client2;
     struct Room* prev;
@@ -30,7 +32,8 @@ void s_enqueue(struct S_Queue* q, int k, int client_id);
 
 int s_delete_node(struct S_Queue* q, int client);
 
-  
+int s_delete_node_by_room_id(struct S_Queue* q, int room_id);
+
 // Function to remove a key from given queue q
 int s_dequeue(struct S_Queue* q);
 
