@@ -6,8 +6,8 @@ using System;
 
 public class UIManager : MonoBehaviour
 {
-    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText;
-    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI;
+    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText;
+    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI;
 
 
     public void SetRoomIDText(string txt){
@@ -25,10 +25,27 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void SetDialogText(string txt){
+        if(dialogText){
+            dialogText.text = txt;
+        }
+    }
+
     public int GetRoomId() {
         if (inputRoomIdText.text != "") {
-            int roomId = Int32.Parse(inputRoomIdText.text);
-            return roomId;        
+            try {
+                int roomId = Int32.Parse(inputRoomIdText.text);
+                if (roomId < 0) {
+                    Debug.Log("Input must be a positive integer");
+                    return -2;
+                }
+
+                return roomId;      
+            } catch {
+                Debug.Log("Input must be a positive integer");
+                return -2;
+            }
+              
         }
         Debug.Log("No input");
         return -1;
@@ -38,6 +55,18 @@ public class UIManager : MonoBehaviour
         if(HomeGUI)
             HomeGUI.SetActive(isShow);
         
+    }
+
+    public void ShowDialogGUI(bool isShow){
+        if(DialogGUI)
+            DialogGUI.SetActive(isShow);
+    }
+
+    public void ShowDialogGUI(bool isShow, string message){
+        if(DialogGUI) {
+            DialogGUI.SetActive(isShow);
+            SetDialogText(message);
+        }
     }
 
     public void ShowCreateRoomGUI(bool isShow){

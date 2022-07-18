@@ -21,6 +21,7 @@ public class NetworkController : MonoBehaviour
 
     UIManager m_ui;
 
+
     void Awake()
 	{
 		if (instance == null)
@@ -57,38 +58,36 @@ public class NetworkController : MonoBehaviour
         
     }
 
-    public void sendMoveData(float x, float y, float r) {
+    public void sendMessage(string message) {
         StringWriter strWriter = new StringWriter();
-        strWriter.Write($"MOVE:{x}-{y}-{r}");
+        strWriter.Write(message);
         string strData = strWriter.ToString();
-        Debug.Log(strData);
+        
         byte[] data=encoding.GetBytes(strData);
         stream.Write(data,0,data.Length);
+        Debug.Log($"SEND: {strData}");
+    }
+
+
+    public void sendMoveData(float x, float y, float r) {
+        sendMessage($"MOVE:{x}-{y}-{r}");
     }
 
     public void sendCreateRoomRequest() {
-        StringWriter strWriter = new StringWriter();
-        strWriter.Write("CREA");
-        string strData = strWriter.ToString();
-        Debug.Log(strData);
-        byte[] data=encoding.GetBytes(strData);
-        stream.Write(data,0,data.Length);
+        sendMessage("CREA");
+        
         // Waiting for data
         int roomId = 0;
         StartCoroutine(GetRoomId((roomIdFromServer) => {
             roomId = roomIdFromServer;
             LogMessageFromServer(roomId.ToString());
+            m_ui.ShowHomeGUI(false);
             m_ui.ShowCreateRoomGUI(true, roomId);
         }));
     }
 
     public void sendCancelWaitingRequest() {
-        StringWriter strWriter = new StringWriter();
-        strWriter.Write("DROP");
-        string strData = strWriter.ToString();
-        Debug.Log(strData);
-        byte[] data=encoding.GetBytes(strData);
-        stream.Write(data,0,data.Length);
+        sendMessage("DROP");
         // Waiting for data
         StartCoroutine(GetServerMessage((message) => {
             LogMessageFromServer(message);
@@ -96,20 +95,109 @@ public class NetworkController : MonoBehaviour
         }));
     }
 
+    public void sendPlayRandomRequest() {
+        int roomId, playerId;
+        sendMessage("RAND");
+        // Waiting for data
+        StartCoroutine(GetRandomPlayResponse((hasRoom, match_room_id, player_id) => {
+            if (hasRoom) {
+                roomId = match_room_id;
+                playerId = player_id;
+                Debug.Log($"Joined room {roomId} with player Id {playerId}");
+            } else {
+                roomId = match_room_id;
+                m_ui.ShowHomeGUI(false);
+                m_ui.ShowCreateRoomGUI(true, roomId);
+                Debug.Log($"No room available. Created room {roomId}.");
+            }
+        }));
+    }
+
     public void joinRoom() {
         int roomId = m_ui.GetRoomId();
-        if (roomId != -1) {
+        if (roomId >= 0) {
             sendJoinRoomRequest(roomId);
         }
     }
 
-    public void sendJoinRoomRequest(int roomId) {
-        StringWriter strWriter = new StringWriter();
-        strWriter.Write($"JOIN:{roomId}");
-        string strData = strWriter.ToString();
-        Debug.Log(strData);
-        byte[] data=encoding.GetBytes(strData);
-        stream.Write(data,0,data.Length);
+    public void sendJoinRoomRequest(int room_id) {
+        sendMessage($"JOIN:{room_id}");
+        int roomId, playerId;
+        StartCoroutine(GetJoinResponse((isSuccess, match_room_id, player_id) => {
+            if (isSuccess) {
+                roomId = match_room_id;
+                playerId = player_id;
+                Debug.Log($"Joined room {roomId} with player Id {playerId}");
+                m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
+            } else {
+                Debug.Log($"Join room {room_id} fail");
+            }
+        }));
+    }
+
+    IEnumerator GetRandomPlayResponse(System.Action<bool, int, int> callbackOnFinish) {
+        yield return new WaitForSeconds(Time.deltaTime);
+        // Receive data
+        byte[] data = new byte[BUFFER_SIZE];
+        stream.Read(data,0,BUFFER_SIZE);
+        string strData = encoding.GetString(data);
+        LogMessageFromServer(strData);
+        // Read data
+        StringReader strReader = new StringReader(strData.Substring(0, 4));
+        string messageType = strReader.ReadLine();
+        // Process room id
+        if (messageType.Equals("MATC")) {
+
+            strReader = new StringReader(strData.Substring(5));
+            string str = strReader.ReadLine();
+            String[] seperator = {":", "-"};
+            String[] arr = str.Split(seperator, 2,
+                   StringSplitOptions.RemoveEmptyEntries);
+            int roomId = Int16.Parse(arr[0]);
+            int playerId = Int16.Parse(arr[1]);
+            
+            Debug.Log($"SERVER: Match room {roomId} successfully. Player ID: {playerId}");
+            callbackOnFinish(true, roomId, playerId);
+        } else if (messageType.Equals("CREA")) {
+            strReader = new StringReader(strData.Substring(5));
+            // Process room id
+            int roomId = Int16.Parse(strReader.ReadLine());
+            int playerId = 1;
+            Debug.Log($"SERVER: No available room. Created room {roomId}.");
+            callbackOnFinish(false, roomId, playerId);
+        }
+        // Debug.Log($"Server: {roomId}");
+        
+    }
+
+    IEnumerator GetJoinResponse(System.Action<bool, int, int> callbackOnFinish) {
+        yield return new WaitForSeconds(Time.deltaTime);
+        // Receive data
+        byte[] data = new byte[BUFFER_SIZE];
+        stream.Read(data,0,BUFFER_SIZE);
+        string strData = encoding.GetString(data);
+        LogMessageFromServer(strData);
+        // Read data
+        StringReader strReader = new StringReader(strData.Substring(0, 4));
+        // Process room id
+        if (strReader.ReadLine().Equals("MATC")) {
+
+            strReader = new StringReader(strData.Substring(5));
+            string str = strReader.ReadLine();
+            String[] seperator = {":", "-"};
+            String[] arr = str.Split(seperator, 2,
+                   StringSplitOptions.RemoveEmptyEntries);
+            int roomId = Int16.Parse(arr[0]);
+            int playerId = Int16.Parse(arr[1]);
+
+            Debug.Log($"SERVER: Match room {roomId} successfully. Player ID: {playerId}");
+            callbackOnFinish(true, roomId, playerId);
+        } else {
+            Debug.Log($"SERVER: Join room fail");
+            callbackOnFinish(false, -1 , -1);
+        }
+        // Debug.Log($"Server: {roomId}");
+        
     }
 
     IEnumerator GetRoomId(System.Action<int> callbackOnFinish) {
@@ -118,6 +206,7 @@ public class NetworkController : MonoBehaviour
         byte[] data = new byte[BUFFER_SIZE];
         stream.Read(data,0,BUFFER_SIZE);
         string strData = encoding.GetString(data);
+        LogMessageFromServer(strData);
         // Read data
         StringReader strReader = new StringReader(strData.Substring(5));
         // Process room id
@@ -130,12 +219,15 @@ public class NetworkController : MonoBehaviour
     IEnumerator GetServerMessage(System.Action<string> callbackOnFinish) {
         yield return new WaitForSeconds(Time.deltaTime);
         // Receive data
+        
         byte[] data = new byte[BUFFER_SIZE];
         stream.Read(data,0,BUFFER_SIZE);
         string strData = encoding.GetString(data);
+        Debug.Log($"{strData} {i++}");
         // Read data
         StringReader strReader = new StringReader(strData.Substring(5));
         callbackOnFinish(strData);
+        
         
     }
 
