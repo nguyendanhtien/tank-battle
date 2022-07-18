@@ -223,7 +223,7 @@ public class NetworkController : MonoBehaviour
         byte[] data = new byte[BUFFER_SIZE];
         stream.Read(data,0,BUFFER_SIZE);
         string strData = encoding.GetString(data);
-        Debug.Log($"{strData} {i++}");
+        // Debug.Log($"{strData} {i++}");
         // Read data
         StringReader strReader = new StringReader(strData.Substring(5));
         callbackOnFinish(strData);
