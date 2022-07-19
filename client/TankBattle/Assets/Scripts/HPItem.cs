@@ -11,6 +11,12 @@ public class HPItem : MonoBehaviour
     void Start()
     {
         m_gc = FindObjectOfType<GameController>();
+
+        
+    }
+
+    void Update(){
+        // Debug.Log(transform.position.x +"-"+transform.position.y);
     }
 
     /// <summary>
@@ -28,8 +34,4 @@ public class HPItem : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }
