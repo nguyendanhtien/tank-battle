@@ -5,25 +5,41 @@ using UnityEngine;
 public class GameController : MonoBehaviour
 {
     int m_roomID;
-    bool m_isGameOver;
+    bool m_isGameOver, isGameStarted;
     float m_timeRemain= 300;
     UIManager m_ui;
     public HPItem hp1;
     public BulletLv2Item bullet1;
     public Tank player1;
     public Enemy  enemy;
+
+    string itemState;
     // Start is called before the first frame update
     void Start()
     {
         m_ui = FindObjectOfType<UIManager>();
         m_ui.ShowHomeGUI(true);
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        m_timeRemain -= Time.deltaTime;
+        
         m_ui.SetTimeText(m_timeRemain);
+        
+        
+        
+    }
+
+    private void LateUpdate() {
+        
+    }
+
+    private void FixedUpdate() {
+        if(isGameStarted){
+            RenderGame();
+        }
     }
 
 
@@ -44,13 +60,24 @@ public class GameController : MonoBehaviour
         m_ui.ShowHomeGUI(true);
     }
 
-
     public void StartGame(){
+        isGameStarted = true;
         m_ui.ShowHomeGUI(false);
         m_ui.ShowGamePlayGUI(true);
-        // player1 = FindObjectOfType<Tank>();
-        renderItems("111111");
-        renderPlayer(-7.5f, -3.5f,0,   7.25f,2.35f,180);
+        player1 = FindObjectOfType<Tank>();
+        enemy = Instantiate(enemy, new Vector2(7.5f, 3.5f), Quaternion.Euler(0,0,90)) ;
+    }
+
+
+    public void RenderGame(){
+        m_timeRemain -= Time.deltaTime;
+        if(true){
+            renderItems("111111");
+        }
+        
+        renderEnemy( 7.25f,2.35f,180);
+        
+        
     }
 
     public void  renderItems(string itemState){
@@ -72,11 +99,21 @@ public class GameController : MonoBehaviour
             Instantiate(bullet1, new Vector2(0.16f, 0.54f), Quaternion.identity);
     }
 
-    public void renderPlayer(float posX1, float posY1, float rotation1, float posX2, float posY2, float rotation2){
-        Instantiate(player1, new Vector2(posX1, posY1), Quaternion.Euler(0,0,rotation1));
+    public void renderEnemy( float posX2, float posY2, float rotation2){
+        // enemy = FindObjectOfType<Enemy>();
+        
+        // Instantiate(player1, new Vector2(posX1, posY1), Quaternion.Euler(0,0,rotation1));
+        // Vector2 pos1 = new Vector2(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f));
 
-        Vector2 posEnemy = new Vector2(posX2, posY2);
-            Instantiate(enemy, posEnemy, Quaternion.Euler(0,0,rotation2));
+        // Vector2 posEnemy = new Vector2(posX2, posY2);
+        //  Enemy clone =    Instantiate(enemy, pos1, Quaternion.Euler(0,0,Random.Range(-180,180))) ;
+
+        // clone.destroy();
+        // yield return new WaitForSeconds(3);
+        // Destroy(clone,0.1f);
+
+
+        enemy.moveNewPos(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f) , Random.Range(-180,180));
 
         
     }

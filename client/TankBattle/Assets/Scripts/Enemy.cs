@@ -15,4 +15,16 @@ public class Enemy : Tank
     {
         
     }
+
+    public void destroy(){
+        Destroy(gameObject);
+    }
+
+    public void moveNewPos(float posX, float posY, float rotation){
+        transform.position = new Vector3(posX, posY, 0);
+        // transform.position.x += posX;
+        // transform.position.y += posY;
+        transform.rotation = Quaternion.Euler(transform.rotation.x, transform.rotation.y, rotation);
+        // transform.rotation.z += rotation;
+    }
 }

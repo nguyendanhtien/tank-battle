@@ -15,7 +15,7 @@ public class BulletLv2Item : MonoBehaviour
     void OnTriggerEnter2D(Collider2D col)
     {
         if(col.CompareTag("Player")){
-            // Destroy(gameObject);
+            Destroy(gameObject);
             Debug.Log("hitted");
             m_gc.getPlayer().EatBulletItem();
         }
