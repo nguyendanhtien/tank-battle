@@ -5,6 +5,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +18,8 @@ public class NetworkController : MonoBehaviour
     private const int PORT_NUMBER=5552;
     private ASCIIEncoding encoding= new ASCIIEncoding();
     private Stream stream;
+
+    private Thread waitServerResponseThread, waitGameStartSignalThread;
     public static NetworkController instance;
 
     UIManager m_ui;
@@ -70,7 +73,7 @@ public class NetworkController : MonoBehaviour
 
 
     public void sendMoveData(float x, float y, float r) {
-        sendMessage($"MOVE:{x}-{y}-{r}");
+        sendMessage($"MOVE:{x},{y},{r}");
     }
 
     public void sendCreateRoomRequest() {
@@ -83,6 +86,11 @@ public class NetworkController : MonoBehaviour
             LogMessageFromServer(roomId.ToString());
             m_ui.ShowHomeGUI(false);
             m_ui.ShowCreateRoomGUI(true, roomId);
+            // Debug.Log("Display");
+            waitServerResponseThread = new Thread(GetMatchResponseFunc);
+            waitServerResponseThread.IsBackground = true;
+            waitServerResponseThread.Start();
+    
         }));
     }
 
@@ -109,6 +117,9 @@ public class NetworkController : MonoBehaviour
                 m_ui.ShowHomeGUI(false);
                 m_ui.ShowCreateRoomGUI(true, roomId);
                 Debug.Log($"No room available. Created room {roomId}.");
+                waitServerResponseThread = new Thread(GetMatchResponseFunc);
+                waitServerResponseThread.IsBackground = true;
+                waitServerResponseThread.Start();
             }
         }));
     }
@@ -129,11 +140,110 @@ public class NetworkController : MonoBehaviour
                 playerId = player_id;
                 Debug.Log($"Joined room {roomId} with player Id {playerId}");
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
+                waitGameStartSignalThread = new Thread(GetOpponentResponse);
+                waitGameStartSignalThread.IsBackground = true;
+                waitGameStartSignalThread.Start();
             } else {
                 Debug.Log($"Join room {room_id} fail");
             }
         }));
     }
+
+    public void SendAcceptPlayGame() {
+        sendMessage("PLAY:1");
+        
+        // Waiting for data
+    
+        m_ui.ShowDialogGUI(false);
+        // Debug.Log("Display");
+        
+    
+      
+    }
+
+    public void SendRefusePlayGame() {
+        sendMessage("PLAY:0");
+        
+        // Waiting for data
+    
+        m_ui.ShowDialogGUI(false);
+        // Debug.Log("Display");
+        m_ui.ShowHomeGUI(true);
+        m_ui.ShowCreateRoomGUI(false);
+        m_ui.ShowJoinRoomGUI(false);
+    
+      
+    }
+
+    public void GetOpponentResponse() {
+        Debug.Log("Thread listen");
+        byte[] data = new byte[BUFFER_SIZE];
+        stream.Read(data,0,BUFFER_SIZE);
+        string strData = encoding.GetString(data);
+        LogMessageFromServer(strData);
+        // Read data
+        StringReader strReader = new StringReader(strData.Substring(0, 4));
+        string messageType = strReader.ReadLine();
+        if (messageType.Equals("GAME")) {
+            strReader = new StringReader(strData.Substring(5));
+            // Process room id
+            int isAnotherAccept = Int16.Parse(strReader.ReadLine());
+        
+            if (isAnotherAccept == 1) {
+                Debug.Log("Opponent player accepts to play with you. GAME START");
+            } else {
+                Debug.Log("Opponent player refuses to play with you. BACK TO HOME SCREEN");
+                MainThread.singleton.AddJob(() => {
+                    m_ui.ShowHomeGUI(true);
+                    m_ui.ShowCreateRoomGUI(false);
+                    m_ui.ShowJoinRoomGUI(false);
+                    m_ui.ShowDialogGUI(false);
+                });
+            }
+        }
+            
+        waitGameStartSignalThread.Abort();
+        waitGameStartSignalThread.Join();
+    }
+
+    public void GetMatchResponseFunc() {
+        byte[] data = new byte[BUFFER_SIZE];
+        
+        stream.Read(data,0,BUFFER_SIZE);
+        
+        string strData = encoding.GetString(data);
+        LogMessageFromServer(strData);
+        // Read data
+        StringReader strReader = new StringReader(strData.Substring(0, 4));
+        string messageType = strReader.ReadLine();
+        // Process room id
+        if (messageType.Equals("MATC")) {
+
+            strReader = new StringReader(strData.Substring(5));
+            string str = strReader.ReadLine();
+            String[] seperator = {":", "-"};
+            String[] arr = str.Split(seperator, 2,
+                StringSplitOptions.RemoveEmptyEntries);
+            int roomId = Int16.Parse(arr[0]);
+            int playerId = Int16.Parse(arr[1]);
+            
+            Debug.Log($"SERVER: Match room {roomId} successfully. Player ID: {playerId}");
+            MainThread.singleton.AddJob(() => {
+                Debug.Log($"Another player joined your room {roomId}. Your player Id: {playerId}");
+                m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
+            });
+        }
+            
+        
+        waitGameStartSignalThread = new Thread(GetOpponentResponse);
+        waitGameStartSignalThread.IsBackground = true;
+        waitGameStartSignalThread.Start();
+
+        waitServerResponseThread.Abort();
+        waitServerResponseThread.Join();
+
+    }
+    
 
     IEnumerator GetRandomPlayResponse(System.Action<bool, int, int> callbackOnFinish) {
         yield return new WaitForSeconds(Time.deltaTime);
@@ -166,13 +276,13 @@ public class NetworkController : MonoBehaviour
             Debug.Log($"SERVER: No available room. Created room {roomId}.");
             callbackOnFinish(false, roomId, playerId);
         }
-        // Debug.Log($"Server: {roomId}");
+        
         
     }
 
     IEnumerator GetJoinResponse(System.Action<bool, int, int> callbackOnFinish) {
         yield return new WaitForSeconds(Time.deltaTime);
-        // Receive data
+      
         byte[] data = new byte[BUFFER_SIZE];
         stream.Read(data,0,BUFFER_SIZE);
         string strData = encoding.GetString(data);
@@ -196,13 +306,12 @@ public class NetworkController : MonoBehaviour
             Debug.Log($"SERVER: Join room fail");
             callbackOnFinish(false, -1 , -1);
         }
-        // Debug.Log($"Server: {roomId}");
         
     }
 
     IEnumerator GetRoomId(System.Action<int> callbackOnFinish) {
         yield return new WaitForSeconds(Time.deltaTime);
-        // Receive data
+        
         byte[] data = new byte[BUFFER_SIZE];
         stream.Read(data,0,BUFFER_SIZE);
         string strData = encoding.GetString(data);
@@ -211,7 +320,7 @@ public class NetworkController : MonoBehaviour
         StringReader strReader = new StringReader(strData.Substring(5));
         // Process room id
         int roomId = Int16.Parse(strReader.ReadLine());
-        // Debug.Log($"Server: {roomId}");
+        Debug.Log($"Server: {roomId}");
         callbackOnFinish(roomId);
         
     }
@@ -221,15 +330,14 @@ public class NetworkController : MonoBehaviour
         // Receive data
         
         byte[] data = new byte[BUFFER_SIZE];
+
+        
         stream.Read(data,0,BUFFER_SIZE);
         string strData = encoding.GetString(data);
-        // Debug.Log($"{strData} {i++}");
-        // Read data
-        StringReader strReader = new StringReader(strData.Substring(5));
         callbackOnFinish(strData);
         
-        
     }
+
 
     public void LogMessageFromServer(string message) {
         Debug.Log($"Server: {message}");

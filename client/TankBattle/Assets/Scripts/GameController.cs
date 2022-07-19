@@ -8,11 +8,13 @@ public class GameController : MonoBehaviour
     bool m_isGameOver;
     float m_timeRemain= 300;
     UIManager m_ui;
+  
     Tank player1;
     // Start is called before the first frame update
     void Start()
     {
         m_ui = FindObjectOfType<UIManager>();
+        
         m_ui.ShowHomeGUI(true);
     }
 
