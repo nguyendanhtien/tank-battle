@@ -17,7 +17,7 @@
 #define MAX_POWER_TIME 10
 #define MAX_HP 10
 struct PlayerStruct {
-    int coord[3];
+    double coord[3];
     int hp;
     int is_shot;
     int power_elapsed;
@@ -117,12 +117,18 @@ int main(int argc, char *argv[]) {
 }
 
 
-Player* player_init(){
+Player* player_init(int id){
     struct PlayerStruct* temp = (struct PlayerStruct*)malloc(sizeof(struct PlayerStruct));
     temp->hp = MAX_HP;
-    temp->coord[0] = 0;
-    temp->coord[1] = 0;
-    temp->coord[2] = 0;
+    if (id == 1) {
+        temp->coord[0] = -7.5;
+        temp->coord[1] = -3.5;
+        temp->coord[2] = 0;
+    } else {
+        temp->coord[0] = 7.5;
+        temp->coord[1] = 3.5;
+        temp->coord[2] = 180;
+    }
     temp->is_shot = 0;
     temp->power_elapsed = 0;
     return temp;
@@ -161,8 +167,8 @@ void *run_game(void *room_info) {
     int client2 = room.client2;
 
     
-    Player* p1 = player_init();
-    Player* p2 = player_init();
+    Player* p1 = player_init(1);
+    Player* p2 = player_init(2);
     
     
     printf("---TANK BATTLE---\n");
@@ -177,7 +183,7 @@ void *run_game(void *room_info) {
     
     int poll_ret;
     int msg_len;
-    char items_state[6] = "11111";
+    char items_state[7] = "111111";
     int time_elapsed = MAX_GAME_TIME;
     char buff[MAX_MSG_LEN];
     bzero(buff, MAX_MSG_LEN);
@@ -188,14 +194,43 @@ void *run_game(void *room_info) {
     begin = time(0);
     power_clock1 = time(0);
     power_clock2 = time(0);
-  
+    char state[MAX_MSG_LEN];
     int power_elapsed;
     while (!gameend) {
+        time_elapsed = max(180 - calc_time(begin), 0);
 
-		poll_ret = poll(pfds, 2, 500);
+        if (time_elapsed <= 0 && gameover == 0) {
+            if (p1->hp <= p2->hp) {
+                send_client_msg(pfds[1].fd, "ENDS:WON\n");
+                send_client_msg(pfds[0].fd, "ENDS:LOSE\n");
+                gameover = 1;
+            } else {
+                send_client_msg(pfds[0].fd, "ENDS:WON\n");
+                send_client_msg(pfds[1].fd, "ENDS:LOSE\n");
+                gameover = 1;
+            }
+        }
+        power_elapsed = calc_time(power_clock1);
+        if (p1->power_elapsed != 0)
+            p1->power_elapsed = max(MAX_POWER_TIME - power_elapsed, 0);
+        power_elapsed = calc_time(power_clock2);
+        if (p2->power_elapsed != 0)
+            p2->power_elapsed = max(MAX_POWER_TIME - power_elapsed, 0);
+                        
+
+		poll_ret = poll(pfds, 2, 50);
 		switch (poll_ret) {
 			case 0:
-				break;                                                    
+                sprintf(state, "STAT:P1:%.5lf,%.5lf,%.5lf~%d~%d~%d|P2:%.5lf,%.5lf,%.5lf~%d~%d~%d|ITEMS:%s|TIME:%d\n", 
+                        p1->coord[0], p1->coord[1], p1->coord[2], p1->hp, p1->is_shot, p1->power_elapsed,
+                        p2->coord[0], p2->coord[1], p2->coord[2], p2->hp, p2->is_shot, p2->power_elapsed,
+                        items_state,
+                        time_elapsed);
+
+                printf("%s", state);
+                send_clients_msg(pfds[0].fd, pfds[1].fd, state);       
+                break;
+                                                            
 			case -1:
 				perror("Error on poll");
 			default:   
@@ -203,25 +238,6 @@ void *run_game(void *room_info) {
 
 					if( pfds[i].revents & POLLIN ) {
                         // clock_t end = clock();
-                        time_elapsed = max(180 - calc_time(begin), 0);
-
-                        if (time_elapsed <= 0 && gameover == 0) {
-                            if (p1->hp <= p2->hp) {
-                                send_client_msg(pfds[1].fd, "\nENDS:WON");
-                                send_client_msg(pfds[0].fd, "\nENDS:LOSE");
-                                gameover = 1;
-                            } else {
-                                send_client_msg(pfds[0].fd, "\nENDS:WON");
-                                send_client_msg(pfds[1].fd, "\nENDS:LOSE");
-                                gameover = 1;
-                            }
-                        }
-						power_elapsed = calc_time(power_clock1);
-                        if (p1->power_elapsed != 0)
-                            p1->power_elapsed = max(MAX_POWER_TIME - power_elapsed, 0);
-                        power_elapsed = calc_time(power_clock2);
-                        if (p2->power_elapsed != 0)
-                            p2->power_elapsed = max(MAX_POWER_TIME - power_elapsed, 0);
                         
 						msg_len = recv(pfds[i].fd, buff, MAX_MSG_LEN, 0);
 
@@ -230,8 +246,8 @@ void *run_game(void *room_info) {
                             bzero(buff, MAX_MSG_LEN);
                             msg_len = recv(pfds[(i + 1) % 2].fd, buff, MAX_MSG_LEN, 0);
                             if (msg_len > 0) {
-                                send_client_msg(pfds[(i + 1) % 2].fd, "\nENDS:WINA");
-                                send_client_msg(pfds[(i + 1) % 2].fd, "\nHOME");
+                                send_client_msg(pfds[(i + 1) % 2].fd, "ENDS:WINA\n");
+                                send_client_msg(pfds[(i + 1) % 2].fd, "HOME\n");
                             } else {
                                 printf("[DEBUG]Player %d disconnected.\n", pfds[(i + 1) % 2].fd);
                             }
@@ -256,14 +272,14 @@ void *run_game(void *room_info) {
 
                             if (is_cont[0] == 0 || is_cont[1] == 0) {
                                 gameend = 1;
-                                send_clients_msg(pfds[0].fd, pfds[1].fd, "HOME");
+                                send_clients_msg(pfds[0].fd, pfds[1].fd, "HOME\n");
                                 break;
                             } else if (is_cont[0] == 1 && is_cont[1] == 1 && gameover == 1) {
                                 printf("[DEBUG]GAME RESTART\n");
                                 printf("---TANK BATTLE---\n");
                                 printf("  Room: %d\n- Client1: %d - Client2: %d\n- Ready: %d - Start: %d.\n", room.key, room.client1, room.client2, room.is_matched, room.is_start);
-                                p1 = player_init();
-                                p2 = player_init();
+                                p1 = player_init(1);
+                                p2 = player_init(2);
                                 begin = time(0);
                                 power_clock1 = time(0);
                                 power_clock2 = time(0);
@@ -284,16 +300,16 @@ void *run_game(void *room_info) {
                             char coords_str[msg_len-4];
                             strncpy(coords_str, &buff[5], msg_len-5);
                             coords_str[msg_len-4] = '\0';
-                            char * token = strtok(coords_str, "-");
+                            char * token = strtok(coords_str, ",");
                             // loop through the string to extract all other tokens
                             int j = 0;
                             while( token != NULL ) {
                                 if (i == 0) {
-                                    p1->coord[j] = atoi(token);
+                                    p1->coord[j] = atof(token);
                                 } else {
-                                    p2->coord[j] = atoi(token);
+                                    p2->coord[j] = atof(token);
                                 }
-                                token = strtok(NULL, "-");
+                                token = strtok(NULL, ",");
                                 j++;
                             }
                         }
@@ -353,25 +369,23 @@ void *run_game(void *room_info) {
                         }
 
 
-                        char state[MAX_MSG_LEN];
-
-                        sprintf(state, "STAT:P1:%d,%d,%d-%d-%d-%d|P2:%d,%d,%d-%d-%d-%d|ITEMS:%s|TIME:%d", 
+                        sprintf(state, "STAT:P1:%.5lf,%.5lf,%.5lf~%d~%d~%d|P2:%.5lf,%.5lf,%.5lf~%d~%d~%d|ITEMS:%s|TIME:%d\n", 
                                 p1->coord[0], p1->coord[1], p1->coord[2], p1->hp, p1->is_shot, p1->power_elapsed,
                                 p2->coord[0], p2->coord[1], p2->coord[2], p2->hp, p2->is_shot, p2->power_elapsed,
                                 items_state,
                                 time_elapsed);
 
-                        printf("%s\n", state);
+                        printf("%s", state);
                         send_clients_msg(pfds[0].fd, pfds[1].fd, state);
                         
                         if (p1->hp <= 0) {
-                            send_client_msg(pfds[1].fd, "\nENDS:WON");
-                            send_client_msg(pfds[0].fd, "\nENDS:LOSE");
+                            send_client_msg(pfds[1].fd, "ENDS:WON\n");
+                            send_client_msg(pfds[0].fd, "ENDS:LOSE\n");
                             gameover = 1;
                         }
                         if (p2->hp <= 0) {
-                            send_client_msg(pfds[0].fd, "\nENDS:WON");
-                            send_client_msg(pfds[1].fd, "\nENDS:LOSE");
+                            send_client_msg(pfds[0].fd, "ENDS:WON\n");
+                            send_client_msg(pfds[1].fd, "ENDS:LOSE\n");
                             gameover = 1;
                         }
                         
@@ -379,7 +393,7 @@ void *run_game(void *room_info) {
                         
                         bzero(buff, MAX_MSG_LEN);
                         if (gameover) {
-                            send_clients_msg(pfds[0].fd, pfds[1].fd, "\nCONT");
+                            send_clients_msg(pfds[0].fd, pfds[1].fd, "CONT\n");
                         }
 					}
 				} 
@@ -591,7 +605,7 @@ int matching_request_handler(char *message, int msg_len, int socket) {
             // send_clients_msg(client1, socket, "\nPLAY");
         } else {
             srand(time(NULL));   
-            int room_id = rand() % 1000;  
+            room_id = rand() % 1000;  
 
             pthread_mutex_lock(&mutex_room_queue);
             s_enqueue(roomQueue, room_id, socket);
