@@ -28,8 +28,8 @@ public class HPItem : MonoBehaviour
     {
         if(col.CompareTag("Player")){
             Destroy(gameObject);
-            Debug.Log("hitted");
-            m_gc.getPlayer().IncreaseHP(5);
+            // Debug.Log("hitted");
+            // m_gc.getPlayer().IncreaseHP(5);
         }
     }
 

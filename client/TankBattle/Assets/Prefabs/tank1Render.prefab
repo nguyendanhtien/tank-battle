@@ -158,15 +158,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 3181620639959133611}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70fd28730f096e85d8fdba8c68d2e2b0, type: 3}
+  m_Script: {fileID: 11500000, guid: 92d0f7479edc854f1b537c76602b3edb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bullet: {fileID: 4600755074130751196, guid: b37dea327fecc168bb0700a7d4a885f9, type: 3}
-  bulletLv2: {fileID: 678086764034938286, guid: c00937864c5aaafdba2098a41560c4ab, type: 3}
+  bullet: {fileID: 0}
+  bulletLv2: {fileID: 0}
   shootingPoint: {fileID: 7037984695594298488}
   shootingPointLv2: {fileID: 6414032726800369843}
-  pos2: {fileID: 0}
-  pos3: {fileID: 0}
+  pos2: {fileID: 1547851072060950498}
+  pos3: {fileID: 5152592101871942066}
 --- !u!50 &5722133915319164425
 Rigidbody2D:
   serializedVersion: 4

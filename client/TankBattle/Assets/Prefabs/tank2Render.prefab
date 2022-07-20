@@ -28,7 +28,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 122869802576620698}
-  m_RootOrder: 0
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &769511154311093967
 GameObject:
@@ -61,10 +61,10 @@ Transform:
   m_LocalPosition: {x: -4.9677715, y: -2.5499594, z: 0}
   m_LocalScale: {x: 0.2, y: 0.2, z: 1}
   m_Children:
-  - {fileID: 3967901802799989701}
   - {fileID: 1461015918958203248}
   - {fileID: 615519192593119553}
   - {fileID: 3967901802799989700}
+  - {fileID: 3967901802799989701}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -175,15 +175,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 769511154311093967}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 631adbaa87509171887f43a8ee770b82, type: 3}
+  m_Script: {fileID: 11500000, guid: 6d6f97135924c7306b5984d5bdf6b9df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bullet: {fileID: 4600755074130751196, guid: b37dea327fecc168bb0700a7d4a885f9, type: 3}
-  bulletLv2: {fileID: 678086764034938286, guid: c00937864c5aaafdba2098a41560c4ab, type: 3}
+  bullet: {fileID: 0}
+  bulletLv2: {fileID: 0}
   shootingPoint: {fileID: 3967901802799989701}
   shootingPointLv2: {fileID: 3967901802799989700}
-  pos2: {fileID: 0}
-  pos3: {fileID: 0}
+  pos2: {fileID: 1461015918958203248}
+  pos3: {fileID: 615519192593119553}
 --- !u!1 &2824742072476826711
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,7 +212,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 122869802576620698}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5563074867781002016
 GameObject:
@@ -242,7 +242,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 122869802576620698}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7691434818147855709
 GameObject:
@@ -272,5 +272,5 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 122869802576620698}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -6,8 +6,8 @@ using System;
 
 public class UIManager : MonoBehaviour
 {
-    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText;
-    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI;
+    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText, popUpText;
+    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI, PopUpGUI;
 
 
     public void SetRoomIDText(string txt){
@@ -30,6 +30,13 @@ public class UIManager : MonoBehaviour
             dialogText.text = txt;
         }
     }
+
+    public void SetPopUpText(string txt){
+        if(popUpText){
+            popUpText.text = txt;
+        }
+    }
+
 
     public int GetRoomId() {
         if (inputRoomIdText.text != "") {
@@ -66,6 +73,22 @@ public class UIManager : MonoBehaviour
         if(DialogGUI) {
             DialogGUI.SetActive(isShow);
             SetDialogText(message);
+        }
+    }
+
+    public void ConfirmNotification() {
+        ShowPopUpGUI(false);
+    }
+
+    public void ShowPopUpGUI(bool isShow){
+        if(PopUpGUI)
+            PopUpGUI.SetActive(isShow);
+    }
+
+    public void ShowPopUpGUI(bool isShow, string message){
+        if(PopUpGUI) {
+            PopUpGUI.SetActive(isShow);
+            SetPopUpText(message);
         }
     }
 

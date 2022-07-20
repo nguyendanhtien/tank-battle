@@ -2,41 +2,61 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Tank : MonoBehaviour
+public class Player1 : MonoBehaviour
 {
-    private int m_hp, m_attack;
-    private float moveSpeed = 4, rotationSpeed = 50, move, rotation, powerEllapse;
+    protected float posX, posY, rot;
+    
+    protected int m_hp, m_attack, numShot;
+    protected float moveSpeed = 4, rotationSpeed = 50, move, rotation, powerEllapse;
     public GameObject bullet, bulletLv2;
     public Transform shootingPoint,shootingPointLv2, pos2, pos3;
     float xDirection, yDirection;
     // Start is called before the first frame update
-    protected int id;
+    protected bool isLocal;
     void Start()
     {
         m_attack= 1;
         m_hp = 50;
         powerEllapse = 0;
-        id = 1;
+        posX = -7.5f;
+        posY = -3.5f;
+        rot = 0.0f;
+        numShot = 0;
+        // isLocal = false;
+    }
+    public void setLocal(bool isLocalArg) {
+        isLocal = isLocalArg;
     }
 
+    public bool getLocal() {
+        return isLocal;
+    }
+
+    public int getNumShooting() {
+        return numShot;
+    }
+
+    
     // Update is called once per frame
-    void Update()
+    protected void Update()
     {
         // xDirection = Input.GetAxisRaw("Horizontal");
         // yDirection = Input.GetAxisRaw("Vertical");
 
         // float xmoveStep = moveSpeed*xDirection*Time.deltaTime;
         // float ymoveStep = moveSpeed*yDirection*Time.deltaTime;
-
-        if(id == 1){
+        
+        if(isLocal){
             move = Input.GetAxis("Vertical") *moveSpeed * Time.deltaTime;
             rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
-
+            
+            
             // transform.position += new Vector3(xmoveStep, ymoveStep,0);
             if(powerEllapse >0)
                 powerEllapse -= Time.deltaTime;
 
             if(Input.GetKeyDown(KeyCode.Space)){
+                NetworkController.instance.sendShootMessage();
                 if(powerEllapse >0){
                     ShootLv2();
                 } else{
@@ -46,16 +66,17 @@ public class Tank : MonoBehaviour
         }
 
         
-
         // if(xDirection == 1){
         //     transform.Rotate(-Vector3.forward*180*Time.deltaTime);
         // }else if(xDirection == -1)
         //     transform.Rotate(Vector3.forward*180*Time.deltaTime);
     }
 
-    private void LateUpdate() {
+    protected void LateUpdate() {
         transform.Translate(0, move, 0);
         transform.Rotate(0,0,rotation);
+        if (move != 0 || rotation != 0) 
+            NetworkController.instance.sendMoveData(transform.position.x, transform.position.y, transform.rotation.eulerAngles.z);
     }
 
     public void Move(){
@@ -65,6 +86,7 @@ public class Tank : MonoBehaviour
     public void Shoot(){
         if(bullet && shootingPoint){
             Instantiate(bullet, shootingPoint.position, shootingPoint.rotation);
+            numShot--;
         }
     }
 
@@ -94,5 +116,23 @@ public class Tank : MonoBehaviour
 
     public void EatBulletItem(){
         powerEllapse += 10;
+    }
+
+    public void moveNewPos(){
+        // Debug.Log($"{this.posX} {this.posY}");
+        transform.position = new Vector3(this.posX, this.posY, 0);
+        // transform.position.x += posX;
+        // transform.position.y += posY;
+        transform.rotation = Quaternion.Euler(transform.rotation.x, transform.rotation.y, this.rot);
+        // transform.rotation.z += rotation;
+    }
+
+    public void setState(float posX, float posY, float rotation, int hp, int isShot, int power) {
+        this.posX = posX;
+        this.posY = posY;
+        this.rot = rotation;
+        this.numShot += isShot;
+        this.m_hp = hp;
+        this.m_attack = power;
     }
 }

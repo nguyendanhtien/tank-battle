@@ -19,10 +19,12 @@ public class NetworkController : MonoBehaviour
     private ASCIIEncoding encoding= new ASCIIEncoding();
     private Stream stream;
 
-    private Thread waitServerResponseThread, waitGameStartSignalThread;
+    private Thread waitServerResponseThread, waitGameStartSignalThread, ingameThread;
+    private int inGameRoomId, inGamePlayerId;
     public static NetworkController instance;
-
+    GameController gameController;
     UIManager m_ui;
+    // Enemy enemy;
 
 
     void Awake()
@@ -38,6 +40,8 @@ public class NetworkController : MonoBehaviour
     void Start()
     {   
         m_ui = FindObjectOfType<UIManager>();
+        gameController = FindObjectOfType<GameController>();
+        // enemy = FindObjectOfType<Enemy>();
         try
         {
             IPAddress address = IPAddress.Parse(ipServer);
@@ -76,6 +80,10 @@ public class NetworkController : MonoBehaviour
         sendMessage($"MOVE:{x},{y},{r}");
     }
 
+    public void sendShootMessage() {
+        sendMessage("SHOT");
+    }
+
     public void sendCreateRoomRequest() {
         sendMessage("CREA");
         
@@ -96,11 +104,12 @@ public class NetworkController : MonoBehaviour
 
     public void sendCancelWaitingRequest() {
         sendMessage("DROP");
+        
         // Waiting for data
-        StartCoroutine(GetServerMessage((message) => {
-            LogMessageFromServer(message);
-            m_ui.ShowHomeGUI(true);
-        }));
+        // StartCoroutine(GetServerMessage((message) => {
+        //     LogMessageFromServer(message);
+        //     m_ui.ShowHomeGUI(true);
+        // }));
     }
 
     public void sendPlayRandomRequest() {
@@ -112,10 +121,17 @@ public class NetworkController : MonoBehaviour
                 roomId = match_room_id;
                 playerId = player_id;
                 Debug.Log($"Joined room {roomId} with player Id {playerId}");
+                m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
+                inGameRoomId = roomId;
+                inGamePlayerId = playerId;
+                waitGameStartSignalThread = new Thread(GetOpponentResponse);
+                waitGameStartSignalThread.IsBackground = true;
+                waitGameStartSignalThread.Start();
             } else {
                 roomId = match_room_id;
                 m_ui.ShowHomeGUI(false);
                 m_ui.ShowCreateRoomGUI(true, roomId);
+                m_ui.ShowPopUpGUI(true, $"No room available. Created room {roomId}.");
                 Debug.Log($"No room available. Created room {roomId}.");
                 waitServerResponseThread = new Thread(GetMatchResponseFunc);
                 waitServerResponseThread.IsBackground = true;
@@ -140,11 +156,14 @@ public class NetworkController : MonoBehaviour
                 playerId = player_id;
                 Debug.Log($"Joined room {roomId} with player Id {playerId}");
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
+                inGameRoomId = roomId;
+                inGamePlayerId = playerId;
                 waitGameStartSignalThread = new Thread(GetOpponentResponse);
                 waitGameStartSignalThread.IsBackground = true;
                 waitGameStartSignalThread.Start();
             } else {
                 Debug.Log($"Join room {room_id} fail");
+                m_ui.ShowPopUpGUI(true, $"Room {room_id} is not available.");
             }
         }));
     }
@@ -156,6 +175,9 @@ public class NetworkController : MonoBehaviour
     
         m_ui.ShowDialogGUI(false);
         // Debug.Log("Display");
+        // waitServerResponseThread.Abort();
+        // waitServerResponseThread.Join();
+        
         
     
       
@@ -171,7 +193,11 @@ public class NetworkController : MonoBehaviour
         m_ui.ShowHomeGUI(true);
         m_ui.ShowCreateRoomGUI(false);
         m_ui.ShowJoinRoomGUI(false);
-    
+        waitServerResponseThread.Abort();
+        waitServerResponseThread.Join();
+        
+        waitGameStartSignalThread.Abort();
+        waitGameStartSignalThread.Join();
       
     }
 
@@ -191,6 +217,16 @@ public class NetworkController : MonoBehaviour
         
             if (isAnotherAccept == 1) {
                 Debug.Log("Opponent player accepts to play with you. GAME START");
+                MainThread.singleton.AddJob(() => {
+                    m_ui.ShowDialogGUI(false);
+                    
+                    gameController.setGameInfo(inGameRoomId, inGamePlayerId);
+                    gameController.StartGame();
+                    ingameThread = new Thread(GetGameState);
+                    ingameThread.IsBackground = true;
+                    ingameThread.Start();
+                });
+                
             } else {
                 Debug.Log("Opponent player refuses to play with you. BACK TO HOME SCREEN");
                 MainThread.singleton.AddJob(() => {
@@ -208,9 +244,10 @@ public class NetworkController : MonoBehaviour
 
     public void GetMatchResponseFunc() {
         byte[] data = new byte[BUFFER_SIZE];
-        
-        stream.Read(data,0,BUFFER_SIZE);
-        
+        lock(stream) {
+
+            stream.Read(data,0,BUFFER_SIZE);
+        }
         string strData = encoding.GetString(data);
         LogMessageFromServer(strData);
         // Read data
@@ -232,18 +269,110 @@ public class NetworkController : MonoBehaviour
                 Debug.Log($"Another player joined your room {roomId}. Your player Id: {playerId}");
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
             });
+            inGameRoomId = roomId;
+            inGamePlayerId = playerId;
+            waitGameStartSignalThread = new Thread(GetOpponentResponse);
+            waitGameStartSignalThread.IsBackground = true;
+            waitGameStartSignalThread.Start();
+        } else if (messageType.Equals("DROP")) {
+            MainThread.singleton.AddJob(() => {
+                m_ui.ShowHomeGUI(true);
+                m_ui.ShowCreateRoomGUI(false);
+            });
         }
+    
             
         
-        waitGameStartSignalThread = new Thread(GetOpponentResponse);
-        waitGameStartSignalThread.IsBackground = true;
-        waitGameStartSignalThread.Start();
+        
 
         waitServerResponseThread.Abort();
         waitServerResponseThread.Join();
 
     }
-    
+    public void DeserializedGameStateMessage(string gameStateMsg) {
+        String[] seperator = {":", "|", "~", ","};
+        String[] arr = gameStateMsg.Split(seperator, 19,
+                StringSplitOptions.RemoveEmptyEntries);
+        // for (int i = 0; i < arr.Length; i++) {
+        //     Debug.Log(arr[i]);
+        // }
+        // Debug.Log(arr.Length);
+        float posX1, posY1, rot1, posX2, posY2, rot2;
+        int hp1, hp2, isShot1, isShot2, power1, power2, time;
+        posX1 = float.Parse(arr[2]);
+        posY1 = float.Parse(arr[3]);
+        rot1 = float.Parse(arr[4]);
+        posX2 = float.Parse(arr[9]);
+        posY2 = float.Parse(arr[10]);
+        rot2 = float.Parse(arr[11]);
+        hp1 = Int16.Parse(arr[5]);
+        hp2 = Int16.Parse(arr[12]);
+        isShot1 = Int16.Parse(arr[6]);
+        isShot2 = Int16.Parse(arr[13]);
+        string items = arr[16];
+        time = Int16.Parse(arr[18]);
+        power1 = Int16.Parse(arr[7]);
+        power2 = Int16.Parse(arr[14]);
+        LogMessageFromServer(gameStateMsg);
+        MainThread.singleton.AddJob(() => {
+                gameController.setGameState(posX1, posY1, rot1, hp1, isShot1, power1,
+                                            posX2, posY2, rot2, hp2, isShot2, power2,
+                                            items, time);
+        });
+    }
+    public void GetGameState() {
+
+        waitGameStartSignalThread.Abort();
+        waitGameStartSignalThread.Join();
+
+        byte[] data = new byte[BUFFER_SIZE];
+        string strData = "";
+        string headSegment = "", lastSegment = "", completeMessage = "";
+        while (stream.Read(data,0,BUFFER_SIZE) > 0) {
+            strData = encoding.GetString(data);
+            String[] seperator = {"\n"};
+            String[] streamQueue = strData.Split(seperator, 10,
+                    StringSplitOptions.RemoveEmptyEntries);
+            headSegment = streamQueue[0];
+            StringReader strReader = new StringReader(headSegment.Substring(0, 4));
+            string messageType = strReader.ReadLine();
+            if (!messageType.Equals("STAT")) {
+                completeMessage = lastSegment + headSegment;
+                DeserializedGameStateMessage(completeMessage);
+            } else {
+                DeserializedGameStateMessage(headSegment);
+            }
+            for (int i = 1; i < streamQueue.Length - 1; i++) {
+                string dataStream = streamQueue[i];
+                // if (dataStream[dataStream.Length - 1] != ) {
+                //     continue;
+                // }
+                // LogMessageFromServer(dataStream);
+                strReader = new StringReader(dataStream.Substring(0, 4));
+                messageType = strReader.ReadLine();
+                // Process room id
+                if (messageType.Equals("STAT")) {
+                    try {
+                        DeserializedGameStateMessage(dataStream);
+                    } catch {
+                        Debug.Log($"ERR: {dataStream}");
+                    }
+                } else {
+                    Debug.Log($"NERR: {dataStream}");
+                }
+            } 
+            lastSegment = streamQueue[streamQueue.Length - 1];
+            try {
+                DeserializedGameStateMessage(lastSegment);
+            } catch {
+                continue;
+            } 
+            data = new byte[BUFFER_SIZE];
+            
+        }
+        ingameThread.Abort();
+        ingameThread.Join();
+    }
 
     IEnumerator GetRandomPlayResponse(System.Action<bool, int, int> callbackOnFinish) {
         yield return new WaitForSeconds(Time.deltaTime);
@@ -331,8 +460,9 @@ public class NetworkController : MonoBehaviour
         
         byte[] data = new byte[BUFFER_SIZE];
 
-        
-        stream.Read(data,0,BUFFER_SIZE);
+        lock(stream) {
+            stream.Read(data,0,BUFFER_SIZE);
+        }
         string strData = encoding.GetString(data);
         callbackOnFinish(strData);
         

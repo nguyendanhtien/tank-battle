@@ -16,8 +16,8 @@ public class BulletLv2Item : MonoBehaviour
     {
         if(col.CompareTag("Player")){
             Destroy(gameObject);
-            Debug.Log("hitted");
-            m_gc.getPlayer().EatBulletItem();
+            // Debug.Log("hitted");
+            // m_gc.getPlayer().EatBulletItem();
         }
     }
 
