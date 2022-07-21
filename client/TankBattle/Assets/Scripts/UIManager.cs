@@ -7,7 +7,7 @@ using System;
 public class UIManager : MonoBehaviour
 {
     public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText, popUpText;
-    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI, PopUpGUI;
+    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI, PopUpGUI, WaitingGUI;
 
 
     public void SetRoomIDText(string txt){
@@ -61,6 +61,12 @@ public class UIManager : MonoBehaviour
     public void ShowHomeGUI(bool isShow){
         if(HomeGUI)
             HomeGUI.SetActive(isShow);
+        
+    }
+
+    public void ShowWaitingGUI(bool isShow){
+        if(WaitingGUI)
+            WaitingGUI.SetActive(isShow);
         
     }
 

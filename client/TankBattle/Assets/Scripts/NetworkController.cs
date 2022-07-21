@@ -219,7 +219,7 @@ public class NetworkController : MonoBehaviour
                 Debug.Log("Opponent player accepts to play with you. GAME START");
                 MainThread.singleton.AddJob(() => {
                     m_ui.ShowDialogGUI(false);
-                    
+                    m_ui.ShowWaitingGUI(false);
                     gameController.setGameInfo(inGameRoomId, inGamePlayerId);
                     gameController.StartGame();
                     ingameThread = new Thread(GetGameState);
@@ -234,6 +234,8 @@ public class NetworkController : MonoBehaviour
                     m_ui.ShowCreateRoomGUI(false);
                     m_ui.ShowJoinRoomGUI(false);
                     m_ui.ShowDialogGUI(false);
+                    m_ui.ShowWaitingGUI(false);
+                    m_ui.ShowPopUpGUI(true, "Opponent refuses to play");
                 });
             }
         }
@@ -267,10 +269,15 @@ public class NetworkController : MonoBehaviour
             Debug.Log($"SERVER: Match room {roomId} successfully. Player ID: {playerId}");
             MainThread.singleton.AddJob(() => {
                 Debug.Log($"Another player joined your room {roomId}. Your player Id: {playerId}");
+                m_ui.ShowCreateRoomGUI(false);
+                m_ui.ShowJoinRoomGUI(false);
+                m_ui.ShowWaitingGUI(true);
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
             });
             inGameRoomId = roomId;
             inGamePlayerId = playerId;
+            
+
             waitGameStartSignalThread = new Thread(GetOpponentResponse);
             waitGameStartSignalThread.IsBackground = true;
             waitGameStartSignalThread.Start();
