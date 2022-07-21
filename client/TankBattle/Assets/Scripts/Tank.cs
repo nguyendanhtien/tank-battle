@@ -4,19 +4,25 @@ using UnityEngine;
 
 public class Tank : MonoBehaviour
 {
-    private int m_hp, m_attack;
+    private float m_hp, m_attack, currentHP;
     private float moveSpeed = 4, rotationSpeed = 50, move, rotation, powerEllapse;
     public GameObject bullet, bulletLv2;
     public Transform shootingPoint,shootingPointLv2, pos2, pos3;
     float xDirection, yDirection;
     // Start is called before the first frame update
     protected int id;
+
+    public HealthBar healthBar;
+    public ManaBar manaBar;
     void Start()
     {
         m_attack= 1;
         m_hp = 50;
+        currentHP = m_hp;  // = max hp
         powerEllapse = 0;
         id = 1;
+        healthBar.SetMaxHealth(m_hp);
+        manaBar.SetMaxMana(10);
     }
 
     // Update is called once per frame
@@ -35,6 +41,7 @@ public class Tank : MonoBehaviour
             // transform.position += new Vector3(xmoveStep, ymoveStep,0);
             if(powerEllapse >0)
                 powerEllapse -= Time.deltaTime;
+                manaBar.SetMana(powerEllapse);
 
             if(Input.GetKeyDown(KeyCode.Space)){
                 if(powerEllapse >0){
@@ -43,6 +50,10 @@ public class Tank : MonoBehaviour
                     Shoot();
                 }         
             }
+        }
+
+        if(Input.GetKeyDown(KeyCode.Space)){
+            gotHit(5);
         }
 
         
@@ -88,11 +99,13 @@ public class Tank : MonoBehaviour
         m_hp += num;
     }
 
-    public void gotHit(){
-        
+    public void gotHit(int dame){
+        currentHP -= dame;
+        healthBar.SetHealth(currentHP);
     }
 
     public void EatBulletItem(){
         powerEllapse += 10;
+
     }
 }

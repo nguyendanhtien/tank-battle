@@ -13,7 +13,7 @@ public class GameController : MonoBehaviour
     public Tank player1;
     public Enemy  enemy;
 
-    string itemState;
+    string m_itemState = "111111";
     // Start is called before the first frame update
     void Start()
     {
@@ -65,17 +65,18 @@ public class GameController : MonoBehaviour
         m_ui.ShowHomeGUI(false);
         m_ui.ShowGamePlayGUI(true);
         player1 = FindObjectOfType<Tank>();
-        enemy = Instantiate(enemy, new Vector2(7.5f, 3.5f), Quaternion.Euler(0,0,90)) ;
+        // enemy = Instantiate(enemy, new Vector2(7.5f, 3.5f), Quaternion.Euler(0,0,90)) ;
+        renderItems("111111");
     }
 
 
     public void RenderGame(){
         m_timeRemain -= Time.deltaTime;
-        if(true){
-            renderItems("111111");
+        if(false){    // neu itemState thay doi, thi render lai
+            renderItems(m_itemState);
         }
         
-        renderEnemy( 7.25f,2.35f,180);
+        // renderEnemy( 7.25f,2.35f,180);
         
         
     }
@@ -120,6 +121,12 @@ public class GameController : MonoBehaviour
 
     public Tank getPlayer(){
         return player1;
+    }
+
+
+    public void QuitGame(){
+        Application.Quit();
+        Debug.Log("aaaaaaaaaaaaaaaaaaaaaaaaaaa");
     }
 
 }
