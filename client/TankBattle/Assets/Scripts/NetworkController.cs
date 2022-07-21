@@ -194,6 +194,7 @@ public class NetworkController : MonoBehaviour
         ingameThread.Abort();
         waitGameStartSignalThread.Abort();
         waitServerResponseThread.Abort();
+        gameController.DestroyGameObjects();
         m_ui.ShowHomeGUI(true);
         m_ui.ShowGamePlayGUI(false);
     }
@@ -414,6 +415,7 @@ public class NetworkController : MonoBehaviour
                     
                     MainThread.singleton.AddJob(() => {
                         m_ui.ShowWaitingGUI(false);
+                        gameController.renderNewGame();
                     });
 
                 // Process room id
@@ -427,18 +429,21 @@ public class NetworkController : MonoBehaviour
                 } else if (messageType.Equals("ENDS")) {
                     strReader = new StringReader(dataStream.Substring(5, 4));
                     string gameResult = strReader.ReadLine();
-                    
+                     
                     if (gameResult.Equals("WINS")) {
                         MainThread.singleton.AddJob(() => {
                                 m_ui.ShowPopUpGUI(true, "You Win!");
+                                
                         });
                     } else if (gameResult.Equals("LOSE")) {
                         MainThread.singleton.AddJob(() => {
                                 m_ui.ShowPopUpGUI(true, "You Lose!");
+                               
                         });
                     } else if (gameResult.Equals("DRAW")) {
                         MainThread.singleton.AddJob(() => {
                                 m_ui.ShowPopUpGUI(true, "Game Draw!");
+                               
                         });
                     } else if (gameResult.Equals("WINA")) {
                         isGameEnd = true;
@@ -446,17 +451,23 @@ public class NetworkController : MonoBehaviour
                                 m_ui.ShowPopUpGUI(true, "Opponent exits game. You Win!");
                                 m_ui.ShowGamePlayGUI(false);
                                 m_ui.ShowHomeGUI(true);
+                                gameController.DestroyGameObjects();
+                               
+                                
                         });
                     }
 
                 } else if (messageType.Equals("CONT")) {
                         MainThread.singleton.AddJob(() => {
+                                gameController.DestroyGameObjects();
                                 m_ui.ShowContinueDialogGUI(true, "Do you want to continue playing?");
                         });
                     
                 } else if (messageType.Equals("HOME")) {
                     isGameEnd = true;
+                    
                     MainThread.singleton.AddJob(() => {
+                            gameController.DestroyGameObjects();
                             m_ui.ShowPopUpGUI(true, "A player does not want to continue playing");
                             m_ui.ShowDialogGUI(false);
                             m_ui.ShowWaitingGUI(false);
@@ -465,7 +476,7 @@ public class NetworkController : MonoBehaviour
                             m_ui.ShowHomeGUI(true);
                     });
                 } else {
-                    Debug.Log($"NERR: {dataStream}");
+                    Debug.Log($"NERR: {dataStream}||{data}");
                 }
             } 
             data = new byte[BUFFER_SIZE];

@@ -14,12 +14,11 @@ public class Player1 : MonoBehaviour
     // Start is called before the first frame update
     protected bool isLocal;
     
-    private Player1 singleton;
+    // protected Player1 singleton;
     public HealthBar healthBar;
     public ManaBar manaBar;
     void Start()
     {
-        singleton = FindObjectOfType<Player1>();
         m_powerElapsed= 0;
         m_hp = 50;
         currentHP = m_hp;  // = max hp
@@ -27,9 +26,10 @@ public class Player1 : MonoBehaviour
         posY = -3.5f;
         rot = 0.0f;
         numShot = 0;
-    
+
         healthBar.SetMaxHealth(m_hp);
         manaBar.SetMaxMana(10);
+        Debug.Log($"Init p1 {isLocal}");
         // isLocal = false;
     }
     public void setLocal(bool isLocalArg) {

@@ -1,19 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
+using System;
 public class GameController : MonoBehaviour
 {   
     int m_roomID, m_localPlayerId;
     bool m_isGameOver, isGameStarted;
     float m_timeRemain= 300;
     UIManager m_ui;
-    public HPItem hp1;
-    public BulletLv2Item bullet1;
-    public Player1 player1;
-    public Player2  player2;
+    public GameObject hp1;
+    public GameObject bullet1;
+    public GameObject player1Prefab;
+    public GameObject  player2Prefab;
+
+    private Player1 player1;
+    private Player2 player2;
+
     private string items;
-   
+    private GameObject[] itemsObj = new GameObject[6];
+    private GameObject player1Object, player2Object;
     string m_itemState = "111111";
     // Start is called before the first frame update
     void Start()
@@ -44,6 +50,9 @@ public class GameController : MonoBehaviour
         
     }
 
+    public void setGameReplay() {
+        isGameStarted = true;
+    }
 
     public void CreateRoom(){
         m_ui.ShowHomeGUI(false);
@@ -78,13 +87,14 @@ public class GameController : MonoBehaviour
 
         // player1 = FindObjectOfType<Player1>() ;
         // player2 = FindObjectOfType<Player2>() ;
-        player1 = FindObjectOfType<Player1>() ;
-        player2 = FindObjectOfType<Player2>() ;
         
+        renderNewPlayers();
         if (m_localPlayerId == 1) {
+            Debug.Log("111111");
             player1.setLocal(true);
             player2.setLocal(false);
         } else {
+            Debug.Log("222222");
             player1.setLocal(false);
             player2.setLocal(true);
         }
@@ -108,21 +118,27 @@ public class GameController : MonoBehaviour
         // Vector2 pos1 = new Vector2(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f));
         // // if(hp1){
         //     Instantiate(hp1, pos1, Quaternion.identity);
-        if(itemState[0] == '1')
-            Instantiate(hp1, new Vector2(7.49f, -3.13f), Quaternion.identity);
-        if(itemState[1] == '1')
-            Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
-        if(itemState[2] == '1')
-            Instantiate(hp1, new Vector2(-7.93f, -1.29f), Quaternion.identity);
+        // if(itemState[0] == '1')
+        itemsObj[0] = (GameObject) Instantiate(hp1, new Vector2(7.49f, -3.13f), Quaternion.identity);
+        // if(itemState[1] == '1')
+        itemsObj[1] = (GameObject) Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
+        // if(itemState[2] == '1')
+        itemsObj[2] = (GameObject) Instantiate(hp1, new Vector2(-7.93f, -1.29f), Quaternion.identity);
 
-        if(itemState[3] == '1')
-            Instantiate(bullet1, new Vector2(-7.57f, 3.07f), Quaternion.identity);
-        if(itemState[4] == '1')
-            Instantiate(bullet1, new Vector2(8.05f, -1.24f), Quaternion.identity);
-        if(itemState[5] == '1')
-            Instantiate(bullet1, new Vector2(0.16f, 2.54f), Quaternion.identity);
+        // if(itemState[3] == '1')
+        itemsObj[3] = (GameObject) Instantiate(bullet1, new Vector2(-7.57f, 3.07f), Quaternion.identity);
+        // if(itemState[4] == '1')
+        itemsObj[4] = (GameObject) Instantiate(bullet1, new Vector2(8.05f, -1.24f), Quaternion.identity);
+        // if(itemState[5] == '1')
+        itemsObj[5] = (GameObject) Instantiate(bullet1, new Vector2(0.16f, 2.54f), Quaternion.identity);
     }
 
+    public void renderNewPlayers() {
+        player1Object = (GameObject) Instantiate(player1Prefab);
+        player2Object = (GameObject) Instantiate(player2Prefab);
+        player1 = player1Object.GetComponent<Player1>();
+        player2 = player2Object.GetComponent<Player2>();
+    }
     public void renderEnemy(){
         
             if (player1.getLocal()) {
@@ -137,6 +153,21 @@ public class GameController : MonoBehaviour
                 StartCoroutine(Player1Shooting());
             }
             
+    }
+
+    public void renderNewGame() {
+        renderNewPlayers();
+        renderItems("111111");
+    }
+
+    public void DestroyGameObjects() {
+        foreach (GameObject i in itemsObj) {
+            Destroy(i);
+        }
+        Destroy(player1Object);
+        Destroy(player2Object);
+        isGameStarted = false;
+
     }
 
     IEnumerator Player2Shooting() {
