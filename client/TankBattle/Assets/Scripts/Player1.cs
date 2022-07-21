@@ -6,22 +6,30 @@ public class Player1 : MonoBehaviour
 {
     protected float posX, posY, rot;
     
-    protected int m_hp, m_attack, numShot;
+    protected int m_hp, m_attack, currentHP, numShot;
     protected float moveSpeed = 4, rotationSpeed = 50, move, rotation, powerEllapse;
     public GameObject bullet, bulletLv2;
     public Transform shootingPoint,shootingPointLv2, pos2, pos3;
     float xDirection, yDirection;
     // Start is called before the first frame update
     protected bool isLocal;
+    
+
+    public HealthBar healthBar;
+    public ManaBar manaBar;
     void Start()
     {
         m_attack= 1;
         m_hp = 50;
+        currentHP = m_hp;  // = max hp
         powerEllapse = 0;
         posX = -7.5f;
         posY = -3.5f;
         rot = 0.0f;
         numShot = 0;
+    
+        healthBar.SetMaxHealth(m_hp);
+        manaBar.SetMaxMana(10);
         // isLocal = false;
     }
     public void setLocal(bool isLocalArg) {
@@ -30,6 +38,7 @@ public class Player1 : MonoBehaviour
 
     public bool getLocal() {
         return isLocal;
+        
     }
 
     public int getNumShooting() {
@@ -54,6 +63,7 @@ public class Player1 : MonoBehaviour
             // transform.position += new Vector3(xmoveStep, ymoveStep,0);
             if(powerEllapse >0)
                 powerEllapse -= Time.deltaTime;
+                manaBar.SetMana(powerEllapse);
 
             if(Input.GetKeyDown(KeyCode.Space)){
                 NetworkController.instance.sendShootMessage();
@@ -63,6 +73,10 @@ public class Player1 : MonoBehaviour
                     Shoot();
                 }         
             }
+        }
+
+        if(Input.GetKeyDown(KeyCode.Space)){
+            gotHit(5);
         }
 
         
@@ -110,12 +124,14 @@ public class Player1 : MonoBehaviour
         m_hp += num;
     }
 
-    public void gotHit(){
-        
+    public void gotHit(int dame){
+        currentHP -= dame;
+        healthBar.SetHealth(currentHP);
     }
 
     public void EatBulletItem(){
         powerEllapse += 10;
+
     }
 
     public void moveNewPos(){

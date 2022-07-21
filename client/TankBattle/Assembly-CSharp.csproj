@@ -38,13 +38,16 @@
   <ItemGroup>
      <Compile Include="Assets/Scripts/projectile.cs" />
      <Compile Include="Assets/Scripts/BulletLv2Item.cs" />
+     <Compile Include="Assets/Scripts/Enemy.cs" />
      <Compile Include="Assets/Scripts/GameController.cs" />
      <Compile Include="Assets/Scripts/NetworkController.cs" />
      <Compile Include="Assets/Scripts/Tank.cs" />
      <Compile Include="Assets/Scripts/Bullet.cs" />
      <Compile Include="Assets/Scripts/HPItem.cs" />
      <Compile Include="Assets/Scripts/UIManager.cs" />
-     <Compile Include="Assets/Scripts/Enemy.cs" />
+     <Compile Include="Assets/Scripts/Wall.cs" />
+     <Compile Include="Assets/Scripts/HealthBar.cs" />
+     <Compile Include="Assets/Scripts/ManaBar.cs" />
     <Reference Include="UnityEngine">
         <HintPath>/home/tiennd/Unity/Hub/Editor/2020.3.34f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
     </Reference>

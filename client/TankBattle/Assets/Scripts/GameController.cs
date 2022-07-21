@@ -14,7 +14,7 @@ public class GameController : MonoBehaviour
     public Player2  player2;
     private string items;
    
-    string itemState;
+    string m_itemState = "111111";
     // Start is called before the first frame update
     void Start()
     {
@@ -87,7 +87,7 @@ public class GameController : MonoBehaviour
             player2.setLocal(true);
         }
         Debug.Log($"Player1: {player1.getLocal()}. Player 2: {player2.getLocal()}");
-        renderItems();
+        renderItems("111111");
     }
 
 
@@ -102,22 +102,23 @@ public class GameController : MonoBehaviour
         
     }
 
-    public void  renderItems(){
+    public void  renderItems(string itemState){
         // Vector2 pos1 = new Vector2(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f));
         // // if(hp1){
         //     Instantiate(hp1, pos1, Quaternion.identity);
-        
-        Instantiate(hp1, new Vector2(7.49f, -3.13f), Quaternion.identity);
-    
-        Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
-    
-        Instantiate(hp1, new Vector2(-7.93f, -1.29f), Quaternion.identity);
-    
-        Instantiate(bullet1, new Vector2(-7.57f, 3.07f), Quaternion.identity);
-    
-        Instantiate(bullet1, new Vector2(8.05f, -1.24f), Quaternion.identity);
-    
-        Instantiate(bullet1, new Vector2(0.16f, 2.54f), Quaternion.identity);
+        if(itemState[0] == '1')
+            Instantiate(hp1, new Vector2(7.49f, -3.13f), Quaternion.identity);
+        if(itemState[1] == '1')
+            Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
+        if(itemState[2] == '1')
+            Instantiate(hp1, new Vector2(-7.93f, -1.29f), Quaternion.identity);
+
+        if(itemState[3] == '1')
+            Instantiate(bullet1, new Vector2(-7.57f, 3.07f), Quaternion.identity);
+        if(itemState[4] == '1')
+            Instantiate(bullet1, new Vector2(8.05f, -1.24f), Quaternion.identity);
+        if(itemState[5] == '1')
+            Instantiate(bullet1, new Vector2(0.16f, 2.54f), Quaternion.identity);
     }
 
     public void renderEnemy(){
@@ -184,6 +185,12 @@ public class GameController : MonoBehaviour
     }
     public Player1 getPlayer(){
         return player1;
+    }
+
+
+    public void QuitGame(){
+        Application.Quit();
+        Debug.Log("aaaaaaaaaaaaaaaaaaaaaaaaaaa");
     }
 
 }
