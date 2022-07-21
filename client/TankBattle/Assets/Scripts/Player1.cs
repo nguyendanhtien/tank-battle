@@ -9,16 +9,17 @@ public class Player1 : MonoBehaviour
     protected int m_hp, m_powerElapsed, currentHP, numShot;
     protected float moveSpeed = 4, rotationSpeed = 50, move, rotation;
     public GameObject bullet, bulletLv2;
-    public Transform shootingPoint,shootingPointLv2, pos2, pos3;
+    public Transform shootingPoint,shootingPointLv2;
     float xDirection, yDirection;
     // Start is called before the first frame update
     protected bool isLocal;
     
-
+    private Player1 singleton;
     public HealthBar healthBar;
     public ManaBar manaBar;
     void Start()
     {
+        singleton = FindObjectOfType<Player1>();
         m_powerElapsed= 0;
         m_hp = 50;
         currentHP = m_hp;  // = max hp

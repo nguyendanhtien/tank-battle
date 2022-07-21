@@ -78,8 +78,8 @@ public class GameController : MonoBehaviour
 
         // player1 = FindObjectOfType<Player1>() ;
         // player2 = FindObjectOfType<Player2>() ;
-        player1 = Instantiate(player1, new Vector2(-7.5f, -3.5f), Quaternion.Euler(0,0,0)) ;
-        player2 = Instantiate(player2, new Vector2(7.5f, 3.5f), Quaternion.Euler(0,0,180)) ;
+        player1 = FindObjectOfType<Player1>() ;
+        player2 = FindObjectOfType<Player2>() ;
         
         if (m_localPlayerId == 1) {
             player1.setLocal(true);
