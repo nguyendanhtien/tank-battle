@@ -478,6 +478,7 @@ void *client_connection_handler(void *cli_sockfd) {
 
 		if (matching_request_handler(client_message, read_len, socket) == 1) {
             create_game_thread();
+            sleep(5);
             // break;
         }	
 
@@ -657,6 +658,8 @@ int matching_request_handler(char *message, int msg_len, int socket) {
                     printf("[DEBUG]Player %d refuse to play. Delete room %d.\n", temp->client1, temp->key);
                     s_delete_node_by_room_id(roomQueue, temp->key);
                     send_client_msg(temp->client2, "GAME:0");
+                    pthread_mutex_unlock(&mutex_room_queue);
+                    return 0;
                 }
 
                 break;
@@ -670,6 +673,8 @@ int matching_request_handler(char *message, int msg_len, int socket) {
                     printf("[DEBUG]Player %d refuse to play. Delete room %d.\n", temp->client2, temp->key);
                     s_delete_node_by_room_id(roomQueue, temp->key);
                     send_client_msg(temp->client1, "GAME:0");
+                    pthread_mutex_unlock(&mutex_room_queue);
+                    return 0;
                 }
                 break;
             } 
