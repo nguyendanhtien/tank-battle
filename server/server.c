@@ -13,9 +13,9 @@
 
 #define MAX_MSG_LEN 128
 #define USER_CAPACITY 256
-#define MAX_GAME_TIME 180
+#define MAX_GAME_TIME 60
 #define MAX_POWER_TIME 10
-#define MAX_HP 10
+#define MAX_HP 50
 struct PlayerStruct {
     double coord[3];
     int hp;
@@ -197,18 +197,23 @@ void *run_game(void *room_info) {
     char state[MAX_MSG_LEN];
     int power_elapsed;
     while (!gameend) {
-        time_elapsed = max(180 - calc_time(begin), 0);
+        time_elapsed = max(MAX_GAME_TIME- calc_time(begin), 0);
 
         if (time_elapsed <= 0 && gameover == 0) {
-            if (p1->hp <= p2->hp) {
-                send_client_msg(pfds[1].fd, "ENDS:WON\n");
+            if (p1->hp < p2->hp) {
+                send_client_msg(pfds[1].fd, "ENDS:WINS\n");
                 send_client_msg(pfds[0].fd, "ENDS:LOSE\n");
                 gameover = 1;
-            } else {
-                send_client_msg(pfds[0].fd, "ENDS:WON\n");
+            } else if (p1->hp > p2->hp) {
+                send_client_msg(pfds[0].fd, "ENDS:WINS\n");
                 send_client_msg(pfds[1].fd, "ENDS:LOSE\n");
                 gameover = 1;
+            } else {
+                send_client_msg(pfds[0].fd, "ENDS:DRAW\n");
+                send_client_msg(pfds[1].fd, "ENDS:DRAW\n");
+                gameover = 1;
             }
+            send_clients_msg(pfds[0].fd, pfds[1].fd, "CONT\n");
         }
         power_elapsed = calc_time(power_clock1);
         if (p1->power_elapsed != 0)
@@ -221,14 +226,16 @@ void *run_game(void *room_info) {
 		poll_ret = poll(pfds, 2, 50);
 		switch (poll_ret) {
 			case 0:
-                sprintf(state, "STAT:P1:%.5lf,%.5lf,%.5lf~%d~%d~%d|P2:%.5lf,%.5lf,%.5lf~%d~%d~%d|ITEMS:%s|TIME:%d\n", 
-                        p1->coord[0], p1->coord[1], p1->coord[2], p1->hp, p1->is_shot, p1->power_elapsed,
-                        p2->coord[0], p2->coord[1], p2->coord[2], p2->hp, p2->is_shot, p2->power_elapsed,
-                        items_state,
-                        time_elapsed);
+                if (!gameover) {
+                    sprintf(state, "STAT:P1:%.5lf,%.5lf,%.5lf~%d~%d~%d|P2:%.5lf,%.5lf,%.5lf~%d~%d~%d|ITEMS:%s|TIME:%d\n", 
+                            p1->coord[0], p1->coord[1], p1->coord[2], p1->hp, p1->is_shot, p1->power_elapsed,
+                            p2->coord[0], p2->coord[1], p2->coord[2], p2->hp, p2->is_shot, p2->power_elapsed,
+                            items_state,
+                            time_elapsed);
 
-                printf("%s", state);
-                send_clients_msg(pfds[0].fd, pfds[1].fd, state);       
+                    printf("%s", state);
+                    send_clients_msg(pfds[0].fd, pfds[1].fd, state);       
+                }
                 break;
                                                             
 			case -1:
@@ -243,15 +250,12 @@ void *run_game(void *room_info) {
 
                         if (msg_len <= 0) {
                             printf("[DEBUG]Player %d disconnected.\n", pfds[i].fd);
-                            bzero(buff, MAX_MSG_LEN);
-                            msg_len = recv(pfds[(i + 1) % 2].fd, buff, MAX_MSG_LEN, 0);
-                            if (msg_len > 0) {
-                                send_client_msg(pfds[(i + 1) % 2].fd, "ENDS:WINA\n");
-                                send_client_msg(pfds[(i + 1) % 2].fd, "HOME\n");
-                            } else {
-                                printf("[DEBUG]Player %d disconnected.\n", pfds[(i + 1) % 2].fd);
-                            }
+                            // bzero(buff, MAX_MSG_LEN);
+                            // msg_len = recv(pfds[(i + 1) % 2].fd, buff, MAX_MSG_LEN, 0);
+                            is_cont[i] = 0;
                             gameend = 1;
+                            if (!gameover)
+                                send_client_msg(pfds[(i + 1) % 2].fd, "ENDS:WINA\n");
                             break;
                         }
                         
@@ -285,6 +289,7 @@ void *run_game(void *room_info) {
                                 power_clock2 = time(0);
                                 bzero(buff, MAX_MSG_LEN);
                                 gameover = 0;
+                                send_clients_msg(pfds[0].fd, pfds[1].fd, "REPL\n");
                                 gameend = 0;
                                 is_cont[0] = -1;
                                 is_cont[1] = -1;
@@ -353,6 +358,16 @@ void *run_game(void *room_info) {
                             items_state[item_id] = '0';
                         }
 
+                        if (!strcmp(msg_type, "QUIT")) {
+                            printf("[DEBUG]Player %d quit game.\n", pfds[i].fd);
+                            // bzero(buff, MAX_MSG_LEN);
+                            // msg_len = recv(pfds[(i + 1) % 2].fd, buff, MAX_MSG_LEN, 0);
+                            gameend = 1;
+                            send_client_msg(pfds[(i + 1) % 2].fd, "ENDS:WINA\n");
+                            // send_client_msg(pfds[i].fd, "QUIT\n");
+                            break;
+                        }
+
                         if (!strcmp(msg_type, "UPAT")) {
                             char item_id_str[2];
                             strncpy(item_id_str, &buff[5], 1);
@@ -379,12 +394,12 @@ void *run_game(void *room_info) {
                         send_clients_msg(pfds[0].fd, pfds[1].fd, state);
                         
                         if (p1->hp <= 0) {
-                            send_client_msg(pfds[1].fd, "ENDS:WON\n");
+                            send_client_msg(pfds[1].fd, "ENDS:WINS\n");
                             send_client_msg(pfds[0].fd, "ENDS:LOSE\n");
                             gameover = 1;
                         }
                         if (p2->hp <= 0) {
-                            send_client_msg(pfds[0].fd, "ENDS:WON\n");
+                            send_client_msg(pfds[0].fd, "ENDS:WINS\n");
                             send_client_msg(pfds[1].fd, "ENDS:LOSE\n");
                             gameover = 1;
                         }
@@ -414,7 +429,7 @@ void *run_game(void *room_info) {
     return 0;
 }   
 
-void create_game_thread(){
+void create_game_thread(int room_id){
   
     pthread_mutex_lock(&mutex_room_queue);
 
@@ -422,7 +437,7 @@ void create_game_thread(){
 
     while (temp != NULL) {
         
-        if (temp->is_client1_ready == 1 && temp->is_client2_ready == 1 & temp->is_start == 0) {
+        if (temp->key == room_id && temp->is_start == 0) {
 
             temp->is_start = 1;
 
@@ -465,6 +480,7 @@ void *client_connection_handler(void *cli_sockfd) {
     
     char client_message[MAX_MSG_LEN];
     bzero(client_message, MAX_MSG_LEN);
+    int match_result;
 
 	while(1) {
         pthread_mutex_lock(&mutex_player[socket]);
@@ -475,9 +491,10 @@ void *client_connection_handler(void *cli_sockfd) {
 		client_message[read_len] = '\0';
 
         printf("\nClient %d: %s\n", socket, client_message);
-
-		if (matching_request_handler(client_message, read_len, socket) == 1) {
-            create_game_thread();
+        match_result = matching_request_handler(client_message, read_len, socket);
+		if (match_result != 0) {
+            if (match_result != -1) 
+                create_game_thread(match_result);
             sleep(5);
             // break;
         }	
@@ -496,7 +513,6 @@ int matching_request_handler(char *message, int msg_len, int socket) {
 
     strncpy(msg_type, &message[0], 4);
     msg_type[4] = '\0';
-
    
     if (!strcmp(msg_type, "DROP")) {
         printf("[DEBUG]Player %d cancel waiting opponent.\n", socket);
@@ -684,10 +700,12 @@ int matching_request_handler(char *message, int msg_len, int socket) {
 
         if (temp->is_client1_ready == 1 && temp->is_client2_ready == 1) {
             send_clients_msg(temp->client1, temp->client2, "GAME:1");
+            pthread_mutex_unlock(&mutex_room_queue);
+            return temp->key;
         } 
-
         pthread_mutex_unlock(&mutex_room_queue);
-        return 1;
+
+        return -1;
     
     } else {
 
@@ -700,12 +718,14 @@ int matching_request_handler(char *message, int msg_len, int socket) {
 }
 
 void send_client_msg(int cli_sockfd, char * msg){
+    printf("SEND:%s||\n", msg);
     int n = send(cli_sockfd, msg, strlen(msg), 0);
     if (n < 0)
         error("ERROR writing msg to client socket");
 }
 
 void send_clients_msg(int cli_sockfd1, int cli_sockfd2, char * msg){
+    printf("SEND BOTH:%s||\n", msg);
     int n = send(cli_sockfd1, msg, strlen(msg), 0);
     if (n < 0)
         error("ERROR writing msg to client socket");

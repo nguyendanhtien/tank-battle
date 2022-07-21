@@ -102,8 +102,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92d0f7479edc854f1b537c76602b3edb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bullet: {fileID: 0}
-  bulletLv2: {fileID: 0}
+  bullet: {fileID: 4600755074130751196, guid: b37dea327fecc168bb0700a7d4a885f9, type: 3}
+  bulletLv2: {fileID: 678086764034938286, guid: c00937864c5aaafdba2098a41560c4ab, type: 3}
   shootingPoint: {fileID: 5480610922798863351}
   shootingPointLv2: {fileID: 8405902296855050044}
   pos2: {fileID: 4098250419743193197}

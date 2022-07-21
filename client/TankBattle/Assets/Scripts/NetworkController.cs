@@ -12,7 +12,6 @@ using UnityEngine.UI;
 public class NetworkController : MonoBehaviour
 {
   
-    [SerializeField]
     private string ipServer;
     private const int BUFFER_SIZE=1024;
     private const int PORT_NUMBER=5552;
@@ -42,9 +41,13 @@ public class NetworkController : MonoBehaviour
         m_ui = FindObjectOfType<UIManager>();
         gameController = FindObjectOfType<GameController>();
         // enemy = FindObjectOfType<Enemy>();
+        
+    }
+
+    public void ConnectServer() {
         try
         {
-            IPAddress address = IPAddress.Parse(ipServer);
+            IPAddress address = IPAddress.Parse(m_ui.getIpServer());
             TcpClient client = new TcpClient();
             client.Connect(address, PORT_NUMBER);
             stream = client.GetStream();
@@ -52,10 +55,12 @@ public class NetworkController : MonoBehaviour
                 LogMessageFromServer(message);
             }));
             Debug.Log("Connected");
+            m_ui.ShowHomeGUI(true);
         }
         catch (Exception ex)
         {
             Debug.Log("Error: " + ex);
+            m_ui.ShowPopUpGUI(true, "Connection failed");
         }
     }
 
@@ -156,6 +161,7 @@ public class NetworkController : MonoBehaviour
                 playerId = player_id;
                 Debug.Log($"Joined room {roomId} with player Id {playerId}");
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
+                m_ui.ShowWaitingGUI(true);
                 inGameRoomId = roomId;
                 inGamePlayerId = playerId;
                 waitGameStartSignalThread = new Thread(GetOpponentResponse);
@@ -170,7 +176,7 @@ public class NetworkController : MonoBehaviour
 
     public void SendAcceptPlayGame() {
         sendMessage("PLAY:1");
-        
+        Debug.Log("AA");
         // Waiting for data
     
         m_ui.ShowDialogGUI(false);
@@ -183,6 +189,34 @@ public class NetworkController : MonoBehaviour
       
     }
 
+    public void SendQuitGame() {
+        sendMessage("QUIT");
+        ingameThread.Abort();
+        waitGameStartSignalThread.Abort();
+        waitServerResponseThread.Abort();
+        m_ui.ShowHomeGUI(true);
+        m_ui.ShowGamePlayGUI(false);
+    }
+
+    public void SendAcceptContinuePlayGame() {
+        sendMessage("CONT:1");
+        Debug.Log("BB");
+        // Waiting for data
+    
+        m_ui.ShowContinueDialogGUI(false);
+        m_ui.ShowWaitingGUI(true);
+      
+    }
+
+    public void SendRefuseContinuePlayGame() {
+        sendMessage("CONT:0");
+        
+        // Waiting for data
+    
+        m_ui.ShowContinueDialogGUI(false);      
+    }
+
+
     public void SendRefusePlayGame() {
         sendMessage("PLAY:0");
         
@@ -191,6 +225,7 @@ public class NetworkController : MonoBehaviour
         m_ui.ShowDialogGUI(false);
         // Debug.Log("Display");
         m_ui.ShowHomeGUI(true);
+        m_ui.ShowWaitingGUI(false);
         m_ui.ShowCreateRoomGUI(false);
         m_ui.ShowJoinRoomGUI(false);
         waitServerResponseThread.Abort();
@@ -220,6 +255,7 @@ public class NetworkController : MonoBehaviour
                 MainThread.singleton.AddJob(() => {
                     m_ui.ShowDialogGUI(false);
                     m_ui.ShowWaitingGUI(false);
+                    m_ui.ShowJoinRoomGUI(false);
                     gameController.setGameInfo(inGameRoomId, inGamePlayerId);
                     gameController.StartGame();
                     ingameThread = new Thread(GetGameState);
@@ -320,7 +356,7 @@ public class NetworkController : MonoBehaviour
         time = Int16.Parse(arr[18]);
         power1 = Int16.Parse(arr[7]);
         power2 = Int16.Parse(arr[14]);
-        LogMessageFromServer(gameStateMsg);
+        // LogMessageFromServer(gameStateMsg);
         MainThread.singleton.AddJob(() => {
                 gameController.setGameState(posX1, posY1, rot1, hp1, isShot1, power1,
                                             posX2, posY2, rot2, hp2, isShot2, power2,
@@ -334,49 +370,114 @@ public class NetworkController : MonoBehaviour
 
         byte[] data = new byte[BUFFER_SIZE];
         string strData = "";
-        string headSegment = "", lastSegment = "", completeMessage = "";
-        while (stream.Read(data,0,BUFFER_SIZE) > 0) {
+        string headSegment = "", lastSegment = "";
+        bool isGameEnd = false;
+        bool isGameOver = false;
+
+        while (!isGameEnd) {
+            if (stream.Read(data,0,BUFFER_SIZE) <= 0) {
+                Debug.Log("Server terminated");
+                break;
+            }
             strData = encoding.GetString(data);
             String[] seperator = {"\n"};
-            String[] streamQueue = strData.Split(seperator, 10,
+            String[] streamQueue = strData.Split(seperator, 1000,
                     StringSplitOptions.RemoveEmptyEntries);
             headSegment = streamQueue[0];
-            StringReader strReader = new StringReader(headSegment.Substring(0, 4));
-            string messageType = strReader.ReadLine();
-            if (!messageType.Equals("STAT")) {
-                completeMessage = lastSegment + headSegment;
-                DeserializedGameStateMessage(completeMessage);
-            } else {
-                DeserializedGameStateMessage(headSegment);
+            string messageType = "";
+            StringReader strReader;
+            try {
+                strReader = new StringReader(headSegment.Substring(0, 4));
+                messageType = strReader.ReadLine();
+            } catch {
+                Debug.Log("ERRR1");
+                Debug.Log(data);
             }
-            for (int i = 1; i < streamQueue.Length - 1; i++) {
+            if (!messageType.Equals("STAT") && !messageType.Equals("ENDS") && !messageType.Equals("HOME") && messageType.Equals("CONT")) {
+                
+                streamQueue[0] = lastSegment + headSegment;
+            } 
+            for (int i = 0; i < streamQueue.Length - 1; i++) {
                 string dataStream = streamQueue[i];
                 // if (dataStream[dataStream.Length - 1] != ) {
                 //     continue;
                 // }
                 // LogMessageFromServer(dataStream);
-                strReader = new StringReader(dataStream.Substring(0, 4));
-                messageType = strReader.ReadLine();
+                try {
+                    strReader = new StringReader(dataStream.Substring(0, 4));
+                    messageType = strReader.ReadLine();
+                } catch {
+                    Debug.Log("ERRR");
+                    Debug.Log(data);
+                }
+                if (messageType.Equals("REPL")) {
+                    
+                    MainThread.singleton.AddJob(() => {
+                        m_ui.ShowWaitingGUI(false);
+                    });
+
                 // Process room id
-                if (messageType.Equals("STAT")) {
+                } else if (messageType.Equals("STAT")) {
+                    
                     try {
                         DeserializedGameStateMessage(dataStream);
                     } catch {
-                        Debug.Log($"ERR: {dataStream}");
+                        Debug.Log($"ERR2: {dataStream}");
                     }
+                } else if (messageType.Equals("ENDS")) {
+                    strReader = new StringReader(dataStream.Substring(5, 4));
+                    string gameResult = strReader.ReadLine();
+                    
+                    if (gameResult.Equals("WINS")) {
+                        MainThread.singleton.AddJob(() => {
+                                m_ui.ShowPopUpGUI(true, "You Win!");
+                        });
+                    } else if (gameResult.Equals("LOSE")) {
+                        MainThread.singleton.AddJob(() => {
+                                m_ui.ShowPopUpGUI(true, "You Lose!");
+                        });
+                    } else if (gameResult.Equals("DRAW")) {
+                        MainThread.singleton.AddJob(() => {
+                                m_ui.ShowPopUpGUI(true, "Game Draw!");
+                        });
+                    } else if (gameResult.Equals("WINA")) {
+                        isGameEnd = true;
+                        MainThread.singleton.AddJob(() => {
+                                m_ui.ShowPopUpGUI(true, "Opponent exits game. You Win!");
+                                m_ui.ShowGamePlayGUI(false);
+                                m_ui.ShowHomeGUI(true);
+                        });
+                    }
+
+                } else if (messageType.Equals("CONT")) {
+                        MainThread.singleton.AddJob(() => {
+                                m_ui.ShowContinueDialogGUI(true, "Do you want to continue playing?");
+                        });
+                    
+                } else if (messageType.Equals("HOME")) {
+                    isGameEnd = true;
+                    MainThread.singleton.AddJob(() => {
+                            m_ui.ShowPopUpGUI(true, "A player does not want to continue playing");
+                            m_ui.ShowDialogGUI(false);
+                            m_ui.ShowWaitingGUI(false);
+                            m_ui.ShowContinueDialogGUI(false);
+                            m_ui.ShowGamePlayGUI(false);
+                            m_ui.ShowHomeGUI(true);
+                    });
                 } else {
                     Debug.Log($"NERR: {dataStream}");
                 }
             } 
+            data = new byte[BUFFER_SIZE];
             lastSegment = streamQueue[streamQueue.Length - 1];
             try {
                 DeserializedGameStateMessage(lastSegment);
             } catch {
                 continue;
             } 
-            data = new byte[BUFFER_SIZE];
             
         }
+        Debug.Log("In Game Thread terminated");
         ingameThread.Abort();
         ingameThread.Join();
     }

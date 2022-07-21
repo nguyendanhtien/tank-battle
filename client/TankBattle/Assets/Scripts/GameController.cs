@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
-{
+{   
     int m_roomID, m_localPlayerId;
     bool m_isGameOver, isGameStarted;
     float m_timeRemain= 300;
@@ -20,7 +20,7 @@ public class GameController : MonoBehaviour
     {
         m_ui = FindObjectOfType<UIManager>();
         
-        m_ui.ShowHomeGUI(true);
+        m_ui.ShowConnectionGUI(true);
         
     }
 
@@ -73,7 +73,9 @@ public class GameController : MonoBehaviour
     public void StartGame(){
         isGameStarted = true;
         m_ui.ShowHomeGUI(false);
+        m_ui.SetInGameRoomIdText($"RoomID:{m_roomID}");
         m_ui.ShowGamePlayGUI(true);
+
         // player1 = FindObjectOfType<Player1>() ;
         // player2 = FindObjectOfType<Player2>() ;
         player1 = Instantiate(player1, new Vector2(-7.5f, -3.5f), Quaternion.Euler(0,0,0)) ;
@@ -122,49 +124,37 @@ public class GameController : MonoBehaviour
     }
 
     public void renderEnemy(){
-        // enemy = FindObjectOfType<Enemy>();
         
-        // Instantiate(player1, new Vector2(posX1, posY1), Quaternion.Euler(0,0,rotation1));
-        // Vector2 pos1 = new Vector2(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f));
-
-        // Vector2 posEnemy = new Vector2(posX2, posY2);
-        //  Enemy clone =    Instantiate(enemy, pos1, Quaternion.Euler(0,0,Random.Range(-180,180))) ;
-
-        // clone.destroy();
-        // yield return new WaitForSeconds(3);
-        // Destroy(clone,0.1f);
-        // if (m_timeRemain < 299) {
             if (player1.getLocal()) {
                 player2.moveNewPos();
                 
                 StartCoroutine(Player2Shooting());
-                    // player2.Shoot();
-                    // player2.setShootingStatus(0);
-                    // Debug.Log("Player 2 ShoottttttttttttTTTT~");
                 
             }
 
-                // Debug.Log($"{player2.}");
             else {
                 player1.moveNewPos();
                 StartCoroutine(Player1Shooting());
             }
-            // enemy.moveNewPos(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f) , Random.Range(-180,180));
-        // }
-
-        
+            
     }
 
     IEnumerator Player2Shooting() {
         while (player2.getNumShooting() > 0) {
-            player2.Shoot();
+            if (player2.getPowerElapsed() > 0)
+                player2.ShootLv2();
+            else 
+                player2.Shoot();
             yield return null;
         }
     }
 
     IEnumerator Player1Shooting() {
         while (player1.getNumShooting() > 0) {
-            player1.Shoot();
+            if (player1.getPowerElapsed() > 0)
+                player1.ShootLv2();
+            else 
+                player1.Shoot();
             yield return null;
         }
     }
@@ -190,7 +180,7 @@ public class GameController : MonoBehaviour
 
     public void QuitGame(){
         Application.Quit();
-        Debug.Log("aaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        Debug.Log("Quit Game");
     }
 
 }

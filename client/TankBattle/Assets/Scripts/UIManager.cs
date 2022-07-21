@@ -6,13 +6,19 @@ using System;
 
 public class UIManager : MonoBehaviour
 {
-    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText, popUpText;
-    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI, PopUpGUI, WaitingGUI;
+    public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText, popUpText, ipServerText, portServerText, continueDialogText, inGameRoomIdText;
+    public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI, PopUpGUI, WaitingGUI, ConnectionGUI, ContinueDialogGUI;
 
 
     public void SetRoomIDText(string txt){
         if(RoomIDText){
             RoomIDText.text = txt;
+        }
+    }
+
+    public void SetInGameRoomIdText(string txt) {
+        if(inGameRoomIdText){
+            inGameRoomIdText.text = txt;
         }
     }
 
@@ -28,6 +34,12 @@ public class UIManager : MonoBehaviour
     public void SetDialogText(string txt){
         if(dialogText){
             dialogText.text = txt;
+        }
+    }
+
+    public void SetContinueDialogText(string txt){
+        if(continueDialogText){
+            continueDialogText.text = txt;
         }
     }
 
@@ -59,14 +71,53 @@ public class UIManager : MonoBehaviour
         
     }
     public void ShowHomeGUI(bool isShow){
-        if(HomeGUI)
+        if(HomeGUI) {
             HomeGUI.SetActive(isShow);
-        
+            ConnectionGUI.SetActive(false);
+        }
+
     }
+
+    public string getIpServer() {
+        // if (ipServerText)
+        return ipServerText.text;
+    }
+
+    public int getPortServer() {
+        if (portServerText) {
+            try {
+                int port = Int16.Parse(portServerText.text);
+                return port;
+            } catch {
+                ShowPopUpGUI(true, "Port Number must be an integer");
+            }
+        }
+        return -1;
+
+    }
+
+    public void ShowConnectionGUI(bool isShow) {
+        if (ConnectionGUI) 
+            ConnectionGUI.SetActive(isShow);
+    }
+
+    public void ShowContinueDialogGUI(bool isShow) {
+        if (ContinueDialogGUI) 
+            ContinueDialogGUI.SetActive(isShow);
+    }
+
+    public void ShowContinueDialogGUI(bool isShow, string txt) {
+        if (ContinueDialogGUI) {
+            ContinueDialogGUI.SetActive(isShow);
+            SetContinueDialogText(txt);
+        }
+    }
+    
 
     public void ShowWaitingGUI(bool isShow){
         if(WaitingGUI)
             WaitingGUI.SetActive(isShow);
+        
         
     }
 

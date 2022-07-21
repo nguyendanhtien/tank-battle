@@ -373,7 +373,7 @@ MonoBehaviour:
   bullet: {fileID: 4600755074130751196, guid: b37dea327fecc168bb0700a7d4a885f9, type: 3}
   bulletLv2: {fileID: 678086764034938286, guid: c00937864c5aaafdba2098a41560c4ab, type: 3}
   shootingPoint: {fileID: 4675495073044427116}
-  shootingPointLv2: {fileID: 0}
+  shootingPointLv2: {fileID: 4675495073044427117}
   pos2: {fileID: 7184633839402197977}
   pos3: {fileID: 9185270815985421288}
   healthBar: {fileID: 6461678914008493040}

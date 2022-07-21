@@ -6,8 +6,8 @@ public class Player1 : MonoBehaviour
 {
     protected float posX, posY, rot;
     
-    protected int m_hp, m_attack, currentHP, numShot;
-    protected float moveSpeed = 4, rotationSpeed = 50, move, rotation, powerEllapse;
+    protected int m_hp, m_powerElapsed, currentHP, numShot;
+    protected float moveSpeed = 4, rotationSpeed = 50, move, rotation;
     public GameObject bullet, bulletLv2;
     public Transform shootingPoint,shootingPointLv2, pos2, pos3;
     float xDirection, yDirection;
@@ -19,10 +19,9 @@ public class Player1 : MonoBehaviour
     public ManaBar manaBar;
     void Start()
     {
-        m_attack= 1;
+        m_powerElapsed= 0;
         m_hp = 50;
         currentHP = m_hp;  // = max hp
-        powerEllapse = 0;
         posX = -7.5f;
         posY = -3.5f;
         rot = 0.0f;
@@ -58,16 +57,13 @@ public class Player1 : MonoBehaviour
         if(isLocal){
             move = Input.GetAxis("Vertical") *moveSpeed * Time.deltaTime;
             rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
-            
-            
-            // transform.position += new Vector3(xmoveStep, ymoveStep,0);
-            if(powerEllapse >0)
-                powerEllapse -= Time.deltaTime;
-                manaBar.SetMana(powerEllapse);
+                
 
             if(Input.GetKeyDown(KeyCode.Space)){
                 NetworkController.instance.sendShootMessage();
-                if(powerEllapse >0){
+                
+                if(this.m_powerElapsed > 0){
+                   
                     ShootLv2();
                 } else{
                     Shoot();
@@ -75,9 +71,6 @@ public class Player1 : MonoBehaviour
             }
         }
 
-        if(Input.GetKeyDown(KeyCode.Space)){
-            gotHit(5);
-        }
 
         
         // if(xDirection == 1){
@@ -97,6 +90,10 @@ public class Player1 : MonoBehaviour
 
     }
 
+    public int getPowerElapsed() {
+        return this.m_powerElapsed;
+    }
+
     public void Shoot(){
         if(bullet && shootingPoint){
             Instantiate(bullet, shootingPoint.position, shootingPoint.rotation);
@@ -107,30 +104,20 @@ public class Player1 : MonoBehaviour
     public void ShootLv2(){
         if(bulletLv2 && shootingPointLv2){
             Instantiate(bulletLv2, shootingPointLv2.position, shootingPointLv2.rotation);
+            numShot--;
         }
     }
 
-    public void Shoot3(){
-        if(bullet && shootingPoint){
-            Instantiate(bullet, shootingPoint.position, shootingPoint.rotation);
-            // Instantiate(bullet, shootingPoint.position + new Vector3(1.0f,0.0f,0), shootingPoint.rotation);
-            // Instantiate(bullet, shootingPoint.position + new Vector3(-1.0f,-0.0f,0), shootingPoint.rotation);
-            Instantiate(bullet, pos2.position, pos2.rotation);
-            Instantiate(bullet, pos3.position, pos3.rotation);
-        }
-    }
-
-    public void IncreaseHP(int num){
-        m_hp += num;
+    public void IncreaseHP() {
+        NetworkController.instance.sendMessage("UPHP");
     }
 
     public void gotHit(int dame){
-        currentHP -= dame;
-        healthBar.SetHealth(currentHP);
+        NetworkController.instance.sendMessage("GHIT");
     }
 
     public void EatBulletItem(){
-        powerEllapse += 10;
+        NetworkController.instance.sendMessage("UPAT");
 
     }
 
@@ -149,6 +136,10 @@ public class Player1 : MonoBehaviour
         this.rot = rotation;
         this.numShot += isShot;
         this.m_hp = hp;
-        this.m_attack = power;
+        this.m_powerElapsed = power;
+      
+        this.healthBar.SetHealth(this.m_hp);
+        this.manaBar.SetMana(this.m_powerElapsed);
+        // Debug.Log($"HP: {this.m_hp}");
     }
 }
