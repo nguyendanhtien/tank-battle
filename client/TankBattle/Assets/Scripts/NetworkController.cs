@@ -135,6 +135,7 @@ public class NetworkController : MonoBehaviour
                 roomId = match_room_id;
                 playerId = player_id;
                 Debug.Log($"Joined room {roomId} with player Id {playerId}");
+                m_ui.ShowWaitingGUI(true);
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
                 inGameRoomId = roomId;
                 inGamePlayerId = playerId;
@@ -201,8 +202,8 @@ public class NetworkController : MonoBehaviour
     public void SendQuitGame() {
         sendMessage("QUIT");
         ingameThread.Abort();
-        waitGameStartSignalThread.Abort();
-        waitServerResponseThread.Abort();
+        // waitGameStartSignalThread.Abort();
+        // waitServerResponseThread.Abort();
         gameController.DestroyGameObjects();
         m_ui.ShowHomeGUI(true);
         m_ui.ShowGamePlayGUI(false);
@@ -239,10 +240,7 @@ public class NetworkController : MonoBehaviour
         m_ui.ShowCreateRoomGUI(false);
         m_ui.ShowJoinRoomGUI(false);
         waitServerResponseThread.Abort();
-        waitServerResponseThread.Join();
-        
         waitGameStartSignalThread.Abort();
-        waitGameStartSignalThread.Join();
       
     }
 
@@ -287,7 +285,6 @@ public class NetworkController : MonoBehaviour
         }
             
         waitGameStartSignalThread.Abort();
-        waitGameStartSignalThread.Join();
     }
 
     public void GetMatchResponseFunc() {
@@ -318,6 +315,7 @@ public class NetworkController : MonoBehaviour
                 m_ui.ShowCreateRoomGUI(false);
                 m_ui.ShowJoinRoomGUI(false);
                 m_ui.ShowWaitingGUI(true);
+                m_ui.ShowHomeGUI(false);
                 m_ui.ShowDialogGUI(true, $"Match room {roomId} successfully.\nDo you want to play now ?");
             });
             inGameRoomId = roomId;
@@ -335,11 +333,7 @@ public class NetworkController : MonoBehaviour
         }
     
             
-        
-        
-
         waitServerResponseThread.Abort();
-        waitServerResponseThread.Join();
 
     }
     public void DeserializedGameStateMessage(string gameStateMsg) {
@@ -376,7 +370,7 @@ public class NetworkController : MonoBehaviour
     public void GetGameState() {
 
         waitGameStartSignalThread.Abort();
-        waitGameStartSignalThread.Join();
+        waitServerResponseThread.Abort();
 
         byte[] data = new byte[BUFFER_SIZE];
         string strData = "";
@@ -501,8 +495,15 @@ public class NetworkController : MonoBehaviour
             } 
             
         }
+
         Debug.Log("In Game Thread terminated");
+        // ingameThread.Abort();
+    }
+
+    public void abortAllThreads() {
         ingameThread.Abort();
+        waitGameStartSignalThread.Abort();
+        waitServerResponseThread.Abort();
     }
 
     IEnumerator GetRandomPlayResponse(System.Action<bool, int, int> callbackOnFinish) {
