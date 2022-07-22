@@ -93,7 +93,7 @@ int s_delete_node(struct S_Queue* q, int client)
         temp = temp->next;
     }
 
-    return 0;
+    return -1;
 }
 
 int s_delete_node_by_room_id(struct S_Queue* q, int room_id)

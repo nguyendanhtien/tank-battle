@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviour
     public Text RoomIDText, hpText, atkText, timeText, inputRoomIdText, dialogText, popUpText, ipServerText, portServerText, continueDialogText, inGameRoomIdText;
     public GameObject HomeGUI, createRoomGUI, joinRoomGUI, GamePlayGUI, DialogGUI, PopUpGUI, WaitingGUI, ConnectionGUI, ContinueDialogGUI;
 
+    public GameObject QuitGameBtn;
 
     public void SetRoomIDText(string txt){
         if(RoomIDText){
@@ -20,6 +21,10 @@ public class UIManager : MonoBehaviour
         if(inGameRoomIdText){
             inGameRoomIdText.text = txt;
         }
+    }
+
+    public void ShowQuitGameBtn(bool isShow) {
+        QuitGameBtn.SetActive(isShow);
     }
 
     public void SetTimeText(float num){

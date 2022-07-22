@@ -50,7 +50,7 @@ public class NetworkController : MonoBehaviour
             IPAddress address = IPAddress.Parse(m_ui.getIpServer());
             TcpClient client = new TcpClient();
             
-            var result = client.BeginConnect(address, PORT_NUMBER, null, null);
+            var result = client.BeginConnect(address, m_ui.getPortServer(), null, null);
 
             var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(CONNECTION_TIMEOUT));
 
@@ -80,13 +80,10 @@ public class NetworkController : MonoBehaviour
     }
 
     public void sendMessage(string message) {
-        StringWriter strWriter = new StringWriter();
-        strWriter.Write(message);
-        string strData = strWriter.ToString();
         
-        byte[] data=encoding.GetBytes(strData);
+        byte[] data=encoding.GetBytes(message);
         stream.Write(data,0,data.Length);
-        Debug.Log($"SEND: {strData}");
+        Debug.Log($"SEND: {message}");
     }
 
 
@@ -104,14 +101,19 @@ public class NetworkController : MonoBehaviour
         // Waiting for data
         int roomId = 0;
         StartCoroutine(GetRoomId((roomIdFromServer) => {
-            roomId = roomIdFromServer;
-            LogMessageFromServer(roomId.ToString());
-            m_ui.ShowHomeGUI(false);
-            m_ui.ShowCreateRoomGUI(true, roomId);
-            // Debug.Log("Display");
-            waitServerResponseThread = new Thread(GetMatchResponseFunc);
-            waitServerResponseThread.IsBackground = true;
-            waitServerResponseThread.Start();
+            if (roomIdFromServer == -1) {
+                m_ui.ShowPopUpGUI(true, "Create Room Failed");
+                
+            } else {
+                roomId = roomIdFromServer;
+                // LogMessageFromServer(roomId.ToString());
+                m_ui.ShowHomeGUI(false);
+                m_ui.ShowCreateRoomGUI(true, roomId);
+                // Debug.Log("Display");
+                waitServerResponseThread = new Thread(GetMatchResponseFunc);
+                waitServerResponseThread.IsBackground = true;
+                waitServerResponseThread.Start();
+            }
     
         }));
     }
@@ -131,6 +133,7 @@ public class NetworkController : MonoBehaviour
         sendMessage("RAND");
         // Waiting for data
         StartCoroutine(GetRandomPlayResponse((hasRoom, match_room_id, player_id) => {
+
             if (hasRoom) {
                 roomId = match_room_id;
                 playerId = player_id;
@@ -144,13 +147,17 @@ public class NetworkController : MonoBehaviour
                 waitGameStartSignalThread.Start();
             } else {
                 roomId = match_room_id;
-                m_ui.ShowHomeGUI(false);
-                m_ui.ShowCreateRoomGUI(true, roomId);
-                m_ui.ShowPopUpGUI(true, $"No room available. Created room {roomId}.");
-                Debug.Log($"No room available. Created room {roomId}.");
-                waitServerResponseThread = new Thread(GetMatchResponseFunc);
-                waitServerResponseThread.IsBackground = true;
-                waitServerResponseThread.Start();
+                if (roomId == -1) {
+                    m_ui.ShowPopUpGUI(true, $"Create Room Failed");
+                } else {
+                    m_ui.ShowHomeGUI(false);
+                    m_ui.ShowCreateRoomGUI(true, roomId);
+                    m_ui.ShowPopUpGUI(true, $"No room available. Created room {roomId}.");
+                    Debug.Log($"No room available. Created room {roomId}.");
+                    waitServerResponseThread = new Thread(GetMatchResponseFunc);
+                    waitServerResponseThread.IsBackground = true;
+                    waitServerResponseThread.Start();
+                }
             }
         }));
     }
@@ -186,7 +193,7 @@ public class NetworkController : MonoBehaviour
 
     public void SendAcceptPlayGame() {
         sendMessage("PLAY:1");
-        Debug.Log("AA");
+    
         // Waiting for data
     
         m_ui.ShowDialogGUI(false);
@@ -201,7 +208,11 @@ public class NetworkController : MonoBehaviour
 
     public void SendQuitGame() {
         sendMessage("QUIT");
-        ingameThread.Abort();
+        try {
+            ingameThread.Abort();
+        } catch {
+            Debug.Log("err");
+        }
         // waitGameStartSignalThread.Abort();
         // waitServerResponseThread.Abort();
         gameController.DestroyGameObjects();
@@ -211,7 +222,7 @@ public class NetworkController : MonoBehaviour
 
     public void SendAcceptContinuePlayGame() {
         sendMessage("CONT:1");
-        Debug.Log("BB");
+       
         // Waiting for data
     
         m_ui.ShowContinueDialogGUI(false);
@@ -237,10 +248,24 @@ public class NetworkController : MonoBehaviour
         // Debug.Log("Display");
         m_ui.ShowHomeGUI(true);
         m_ui.ShowWaitingGUI(false);
+        m_ui.ShowGamePlayGUI(false);
         m_ui.ShowCreateRoomGUI(false);
         m_ui.ShowJoinRoomGUI(false);
-        waitServerResponseThread.Abort();
-        waitGameStartSignalThread.Abort();
+        try {
+            waitServerResponseThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
+        try {
+            ingameThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
+        try {
+            waitGameStartSignalThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
       
     }
 
@@ -284,7 +309,11 @@ public class NetworkController : MonoBehaviour
             }
         }
             
-        waitGameStartSignalThread.Abort();
+        try {
+            waitGameStartSignalThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
     }
 
     public void GetMatchResponseFunc() {
@@ -332,8 +361,12 @@ public class NetworkController : MonoBehaviour
             });
         }
     
-            
-        waitServerResponseThread.Abort();
+        try {
+            waitServerResponseThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
+        
 
     }
     public void DeserializedGameStateMessage(string gameStateMsg) {
@@ -368,8 +401,12 @@ public class NetworkController : MonoBehaviour
         });
     }
     public void GetGameState() {
-
-        waitGameStartSignalThread.Abort();
+        try {
+            waitGameStartSignalThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
+        
         try {
             waitServerResponseThread.Abort();
         } catch {
@@ -422,6 +459,7 @@ public class NetworkController : MonoBehaviour
                     
                     MainThread.singleton.AddJob(() => {
                         m_ui.ShowWaitingGUI(false);
+                        m_ui.ShowQuitGameBtn(true);
                         gameController.renderNewGame();
                     });
 
@@ -458,7 +496,7 @@ public class NetworkController : MonoBehaviour
                     } else if (gameResult.Equals("WINA")) {
                         isGameEnd = true;
                         MainThread.singleton.AddJob(() => {
-                                m_ui.ShowPopUpGUI(true, "Opponent exits game. You Win!");
+                                m_ui.ShowPopUpGUI(true, "Opponent exits game!");
                                 m_ui.ShowGamePlayGUI(false);
                                 m_ui.ShowHomeGUI(true);
                                 m_ui.SetTimeText(0);
@@ -472,6 +510,7 @@ public class NetworkController : MonoBehaviour
                         MainThread.singleton.AddJob(() => {
                                 gameController.DestroyGameObjects();
                                 m_ui.ShowContinueDialogGUI(true, "Do you want to continue playing?");
+                                m_ui.ShowQuitGameBtn(false);
                         });
                     
                 } else if (messageType.Equals("HOME")) {
@@ -536,7 +575,12 @@ public class NetworkController : MonoBehaviour
         } else if (messageType.Equals("CREA")) {
             strReader = new StringReader(strData.Substring(5));
             // Process room id
-            int roomId = Int16.Parse(strReader.ReadLine());
+            int roomId;
+            try {
+                roomId = Int16.Parse(strReader.ReadLine());
+            } catch {
+                roomId = -1;
+            }
             int playerId = 1;
             Debug.Log($"SERVER: No available room. Created room {roomId}.");
             callbackOnFinish(false, roomId, playerId);
@@ -575,6 +619,7 @@ public class NetworkController : MonoBehaviour
     }
 
     IEnumerator GetRoomId(System.Action<int> callbackOnFinish) {
+        
         yield return new WaitForSeconds(Time.deltaTime);
         
         byte[] data = new byte[BUFFER_SIZE];
@@ -584,9 +629,14 @@ public class NetworkController : MonoBehaviour
         // Read data
         StringReader strReader = new StringReader(strData.Substring(5));
         // Process room id
-        int roomId = Int16.Parse(strReader.ReadLine());
-        Debug.Log($"Server: {roomId}");
-        callbackOnFinish(roomId);
+        try {
+            int roomId = Int16.Parse(strReader.ReadLine());
+            Debug.Log($"Server: {roomId}");
+            callbackOnFinish(roomId);
+        } catch {
+            Debug.Log("CREA:FAIL");
+            callbackOnFinish(-1);
+        }
         
     }
 

@@ -28,17 +28,21 @@ public class Bullet : MonoBehaviour
         // }
     }
 
-    private void OnCollisionEnter2D(Collision2D col) {
+    private void OnTriggerEnter2D(Collider2D col) {
         if( col.gameObject.CompareTag("StaticObject")) {
             // Debug.Log("Bullet Hit Obstacle");
             Destroy(gameObject);
         }
-        if(col.gameObject.CompareTag("hpItem")) {
-            Physics2D.IgnoreCollision(col.gameObject.GetComponent<BoxCollider2D>(), GetComponent<CircleCollider2D>());
-        }
+        // if(col.gameObject.CompareTag("hpItem")) {
+        //     Physics2D.IgnoreCollision(col.gameObject.GetComponent<BoxCollider2D>(), GetComponent<CircleCollider2D>());
+        // }
 
-        if(col.gameObject.CompareTag("powerItem")) {
-            Physics2D.IgnoreCollision(col.gameObject.GetComponent<BoxCollider2D>(), GetComponent<CircleCollider2D>());
-        }
+        // if(col.gameObject.CompareTag("powerItem")) {
+        //     Physics2D.IgnoreCollision(col.gameObject.GetComponent<BoxCollider2D>(), GetComponent<CircleCollider2D>());
+        // }
+
+        // if(col.gameObject.CompareTag("bullet")) {
+        //     Physics2D.IgnoreCollision(col.gameObject.GetComponent<CircleCollider2D>(), GetComponent<CircleCollider2D>());
+        // }
     }
 }

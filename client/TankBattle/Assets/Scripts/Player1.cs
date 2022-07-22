@@ -130,19 +130,6 @@ public class Player1 : MonoBehaviour
         }
     }
 
-    public void IncreaseHP() {
-        NetworkController.instance.sendMessage("UPHP");
-    }
-
-    public void gotHit(int dame){
-        NetworkController.instance.sendMessage("GHIT");
-    }
-
-    public void EatBulletItem(){
-        NetworkController.instance.sendMessage("UPAT");
-
-    }
-
     public void moveNewPos(){
         // Debug.Log($"{this.posX} {this.posY}");
         transform.position = new Vector3(this.posX, this.posY, 0);
@@ -172,7 +159,7 @@ public class Player1 : MonoBehaviour
    
     // }
 
-    protected void OnCollisionEnter2D(Collision2D col) {
+    protected void OnTriggerEnter2D(Collider2D col) {
         
             if(col.gameObject.CompareTag("bullet")){
                 if (isLocal)

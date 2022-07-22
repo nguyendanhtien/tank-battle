@@ -92,6 +92,7 @@ public class GameController : MonoBehaviour
         m_ui.ShowHomeGUI(false);
         m_ui.SetInGameRoomIdText($"RoomID:{m_roomID}");
         m_ui.ShowGamePlayGUI(true);
+        m_ui.ShowQuitGameBtn(true);
 
         // player1 = FindObjectOfType<Player1>() ;
         // player2 = FindObjectOfType<Player2>() ;
@@ -123,7 +124,7 @@ public class GameController : MonoBehaviour
         // if(itemState[1] == '1')
         itemsObj[1] = (GameObject) Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
         // if(itemState[2] == '1')
-        itemsObj[2] = (GameObject) Instantiate(hp1, new Vector2(-7.93f, -1.29f), Quaternion.identity);
+        itemsObj[2] = (GameObject) Instantiate(hp1, new Vector2(-7.93f, -0.29f), Quaternion.identity);
 
         // if(itemState[3] == '1')
         itemsObj[3] = (GameObject) Instantiate(bullet1, new Vector2(-7.57f, 3.07f), Quaternion.identity);
@@ -205,7 +206,7 @@ public class GameController : MonoBehaviour
 
                     itemsStr[i] = '0';
                     items = itemsStr.ToString();
-                    // itemsObj[i] = null;
+              
                     break;
                 }
             }

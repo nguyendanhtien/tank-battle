@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
             pthread_mutex_unlock(&mutexcount);
         }
     }
-
+    
     for (int i = 0; i < player_count; i++) {
 	    pthread_join(client_thread[i], NULL);
 	}
@@ -376,6 +376,16 @@ void *run_game(void *room_info) {
                             break;
                         }
 
+                        if (!strcmp(msg_type, "PLAY")) {
+                            printf("[DEBUG]Player %d does not want to play game.\n", pfds[i].fd);
+                            // bzero(buff, MAX_MSG_LEN);
+                            // msg_len = recv(pfds[(i + 1) % 2].fd, buff, MAX_MSG_LEN, 0);
+                            gameend = 1;
+                            send_client_msg(pfds[(i + 1) % 2].fd, "HOME\n");
+                            // send_client_msg(pfds[i].fd, "QUIT\n");
+                            break;
+                        }
+
                         if (!strcmp(msg_type, "UPAT")) {
                             char item_id_str[2];
                             strncpy(item_id_str, &buff[5], 1);
@@ -442,13 +452,13 @@ void create_game_thread(int room_id){
     pthread_mutex_lock(&mutex_room_queue);
 
     struct Room* temp = roomQueue->front;
-
+    
     while (temp != NULL) {
         
         if (temp->key == room_id && temp->is_start == 0) {
 
             temp->is_start = 1;
-
+            
             struct Room* room = (struct Room*)malloc(sizeof(struct Room));
             room = temp;
             pthread_mutex_lock(&mutex_player[temp->client1]);
@@ -503,14 +513,26 @@ void *client_connection_handler(void *cli_sockfd) {
 		if (match_result != 0) {
             if (match_result != -1) 
                 create_game_thread(match_result);
-            sleep(5);
+            // sleep(5);
             // break;
         }	
 
 	}
-    if (read_len <= 0) 
+    if (read_len <= 0) {
         printf("[DEBUG]Player %d is disconnected.\n", socket);
+        pthread_mutex_lock(&mutex_room_queue);
+        int roomId = s_delete_node(roomQueue, socket);
+        pthread_mutex_unlock(&mutex_room_queue);
+        if (roomId != -1) 
+            printf("[DEBUG]Delete room: %d.\n", roomId);
+        pthread_mutex_lock(&mutexcount);
+        // Subtract player count.
+        player_count--;
+        printf("[DEBUG]Number of players is now %d.\n", player_count);
+        pthread_mutex_unlock(&mutexcount);
 
+    }
+  
 	pthread_exit(NULL);
 	return 0;
 }
@@ -537,15 +559,37 @@ int matching_request_handler(char *message, int msg_len, int socket) {
 
     } else if (!strcmp(msg_type, "CREA")) {
 
-        srand(time(NULL));   
-        int room_id = rand() % 1000;  
-
+        int is_room_exists = 0;
+        int room_id;
+        char send_message[MAX_MSG_LEN];
         pthread_mutex_lock(&mutex_room_queue);
+        do {
+            srand(time(NULL));   
+            room_id = rand() % 1000;
+            // check unique
+            
+            struct Room* temp = roomQueue->front;
+            while (temp != NULL) {
+                // printf("Room: %d", temp->key);
+                if (temp->key == room_id) {
+                    is_room_exists = 1;    
+                    break;
+                }
+
+                if (temp->client1 == socket) {
+                    sprintf(send_message, "CREA:FAIL");
+                    send_client_msg(socket, send_message);
+                    pthread_mutex_unlock(&mutex_room_queue);
+                    return 0;
+                }
+                temp = temp->next;
+            }
+        } while (is_room_exists);
+        // pthread_mutex_lock(&mutex_room_queue);
         s_enqueue(roomQueue, room_id, socket);
         pthread_mutex_unlock(&mutex_room_queue);
 
         printf("[DEBUG]Created Room: %d for player %d\n", room_id, socket);
-        char send_message[MAX_MSG_LEN];
         sprintf(send_message, "CREA:%d", room_id);
         send_client_msg(socket, send_message);
 
@@ -629,15 +673,35 @@ int matching_request_handler(char *message, int msg_len, int socket) {
             // return 1;
             // send_clients_msg(client1, socket, "\nPLAY");
         } else {
-            srand(time(NULL));   
-            room_id = rand() % 1000;  
-
+            char send_message[MAX_MSG_LEN];
+            int is_room_exists = 0;
+            int room_id;
             pthread_mutex_lock(&mutex_room_queue);
+            do {
+                srand(time(NULL));   
+                room_id = rand() % 1000;
+                // check unique
+                
+                struct Room* temp = roomQueue->front;
+                while (temp != NULL) {
+                    // printf("Room: %d", temp->key);
+                    if (temp->key == room_id) {
+                        is_room_exists = 1;    
+                        break;
+                    }
+                    if (temp->client1 == socket) {
+                        sprintf(send_message, "CREA:FAIL");
+                        send_client_msg(socket, send_message);
+                        pthread_mutex_unlock(&mutex_room_queue);
+                        return 0;
+                    }
+                    temp = temp->next;
+                }
+            } while (is_room_exists);
             s_enqueue(roomQueue, room_id, socket);
             pthread_mutex_unlock(&mutex_room_queue);
 
             printf("[DEBUG]Created Room: %d for player %d\n", room_id, socket);
-            char send_message[MAX_MSG_LEN];
             sprintf(send_message, "CREA:%d", room_id);
             send_client_msg(socket, send_message);
         }
