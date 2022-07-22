@@ -24,14 +24,15 @@ public class HPItem : MonoBehaviour
     /// collider (2D physics only).
     /// </summary>
     /// <param name="other">The Collision2D data associated with this collision.</param>
-    void OnTriggerEnter2D(Collider2D col)
-    {
-        if(col.CompareTag("Player")){
-            Destroy(gameObject);
-            // Debug.Log("hitted");
-            // m_gc.getPlayer().IncreaseHP(5);
-        }
-    }
+    
+    // void OnTriggerEnter2D(Collider2D col)
+    // {
+    //     if(col.CompareTag("Player")){
+    //         Destroy(gameObject);
+    //         // Debug.Log("hitted");
+    //         // m_gc.getPlayer().IncreaseHP(5);
+    //     }
+    // }
 
     // Update is called once per frame
 }

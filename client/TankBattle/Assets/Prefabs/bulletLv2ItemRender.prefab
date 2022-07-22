@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 7120489541408865400}
   m_Layer: 0
   m_Name: bulletLv2ItemRender
-  m_TagString: Untagged
+  m_TagString: powerItem
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

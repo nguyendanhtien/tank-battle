@@ -12,14 +12,14 @@ public class BulletLv2Item : MonoBehaviour
     }
 
 
-    void OnTriggerEnter2D(Collider2D col)
-    {
-        if(col.CompareTag("Player")){
-            Destroy(gameObject);
-            // Debug.Log("hitted");
-            // m_gc.getPlayer().EatBulletItem();
-        }
-    }
+    // void OnTriggerEnter2D(Collider2D col)
+    // {
+    //     if(col.CompareTag("Player")){
+    //         Destroy(gameObject);
+    //         // Debug.Log("hitted");
+    //         // m_gc.getPlayer().EatBulletItem();
+    //     }
+    // }
 
     // Update is called once per frame
     void Update()

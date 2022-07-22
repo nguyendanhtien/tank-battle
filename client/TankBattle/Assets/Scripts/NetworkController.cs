@@ -433,16 +433,19 @@ public class NetworkController : MonoBehaviour
                     if (gameResult.Equals("WINS")) {
                         MainThread.singleton.AddJob(() => {
                                 m_ui.ShowPopUpGUI(true, "You Win!");
+                                m_ui.SetTimeText(0);
                                 
                         });
                     } else if (gameResult.Equals("LOSE")) {
                         MainThread.singleton.AddJob(() => {
                                 m_ui.ShowPopUpGUI(true, "You Lose!");
+                                m_ui.SetTimeText(0);
                                
                         });
                     } else if (gameResult.Equals("DRAW")) {
                         MainThread.singleton.AddJob(() => {
                                 m_ui.ShowPopUpGUI(true, "Game Draw!");
+                                m_ui.SetTimeText(0);
                                
                         });
                     } else if (gameResult.Equals("WINA")) {
@@ -451,6 +454,7 @@ public class NetworkController : MonoBehaviour
                                 m_ui.ShowPopUpGUI(true, "Opponent exits game. You Win!");
                                 m_ui.ShowGamePlayGUI(false);
                                 m_ui.ShowHomeGUI(true);
+                                m_ui.SetTimeText(0);
                                 gameController.DestroyGameObjects();
                                
                                 

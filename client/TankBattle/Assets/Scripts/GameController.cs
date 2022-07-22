@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Text;
 public class GameController : MonoBehaviour
 {   
     int m_roomID, m_localPlayerId;
@@ -11,9 +12,10 @@ public class GameController : MonoBehaviour
     UIManager m_ui;
     public GameObject hp1;
     public GameObject bullet1;
+    // public Transform gameObjectsCanvas;
     public GameObject player1Prefab;
     public GameObject  player2Prefab;
-
+  
     private Player1 player1;
     private Player2 player2;
 
@@ -33,7 +35,7 @@ public class GameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+    
         m_ui.SetTimeText(m_timeRemain);
         if(isGameStarted){
             RenderGame();
@@ -50,7 +52,12 @@ public class GameController : MonoBehaviour
         
     }
 
-    public void setGameReplay() {
+    public void setGameStart() {
+        StartCoroutine(setGameStatus());
+    }
+
+    IEnumerator setGameStatus() {
+        yield return null;
         isGameStarted = true;
     }
 
@@ -80,7 +87,7 @@ public class GameController : MonoBehaviour
     }
 
     public void StartGame(){
-        isGameStarted = true;
+
         m_ui.ShowHomeGUI(false);
         m_ui.SetInGameRoomIdText($"RoomID:{m_roomID}");
         m_ui.ShowGamePlayGUI(true);
@@ -88,18 +95,9 @@ public class GameController : MonoBehaviour
         // player1 = FindObjectOfType<Player1>() ;
         // player2 = FindObjectOfType<Player2>() ;
         
-        renderNewPlayers();
-        if (m_localPlayerId == 1) {
-            Debug.Log("111111");
-            player1.setLocal(true);
-            player2.setLocal(false);
-        } else {
-            Debug.Log("222222");
-            player1.setLocal(false);
-            player2.setLocal(true);
-        }
-        Debug.Log($"Player1: {player1.getLocal()}. Player 2: {player2.getLocal()}");
-        renderItems("111111");
+        renderNewGame();
+        
+        
     }
 
 
@@ -108,17 +106,18 @@ public class GameController : MonoBehaviour
         // if(true){
         //     // renderItems("111111");
         // }
-        
+        updateItems();
         renderEnemy();
         
         
     }
 
-    public void  renderItems(string itemState){
+    public void  renderNewItems(){
         // Vector2 pos1 = new Vector2(Random.Range(-8.6f, 8.6f), Random.Range(-4.7f, 3.52f));
         // // if(hp1){
         //     Instantiate(hp1, pos1, Quaternion.identity);
         // if(itemState[0] == '1')
+        items = "111111";
         itemsObj[0] = (GameObject) Instantiate(hp1, new Vector2(7.49f, -3.13f), Quaternion.identity);
         // if(itemState[1] == '1')
         itemsObj[1] = (GameObject) Instantiate(hp1, new Vector2(-0.72f, -3.56f), Quaternion.identity);
@@ -136,8 +135,22 @@ public class GameController : MonoBehaviour
     public void renderNewPlayers() {
         player1Object = (GameObject) Instantiate(player1Prefab);
         player2Object = (GameObject) Instantiate(player2Prefab);
+        
+        // player1Object.transform.SetParent(gameObjectsCanvas, false);
+        // player2Object.transform.SetParent(gameObjectsCanvas, false);
+        
         player1 = player1Object.GetComponent<Player1>();
         player2 = player2Object.GetComponent<Player2>();
+        if (m_localPlayerId == 1) {
+            Debug.Log("111111");
+            player1.setLocal(true);
+            player2.setLocal(false);
+        } else {
+            Debug.Log("222222");
+            player1.setLocal(false);
+            player2.setLocal(true);
+        }
+        Debug.Log($"Player1: {player1.getLocal()}. Player 2: {player2.getLocal()}");
     }
     public void renderEnemy(){
         
@@ -154,20 +167,48 @@ public class GameController : MonoBehaviour
             }
             
     }
-
+    public void updateItems() {
+        for(int i = 0; i < items.Length; i++) {
+            if (items[i] == '0') {
+                if (itemsObj[i] != null) {
+                    Destroy(itemsObj[i]);
+                    itemsObj[i] = null;
+                }
+            }
+        }
+    }
     public void renderNewGame() {
         renderNewPlayers();
-        renderItems("111111");
+        renderNewItems();
+        setGameStart();
     }
 
     public void DestroyGameObjects() {
-        foreach (GameObject i in itemsObj) {
-            Destroy(i);
+        for (int i = 0; i < itemsObj.Length; i++) {
+            Destroy(itemsObj[i]);
+            itemsObj[i] = null;
+            items = "000000";
         }
         Destroy(player1Object);
         Destroy(player2Object);
         isGameStarted = false;
 
+    }
+
+    public void SendGetItem(string itemType, int instanceId) {
+        for (int i = 0; i < itemsObj.Length; i++) {
+            if (itemsObj[i] != null) {
+                if (itemsObj[i].GetInstanceID() == instanceId) {
+                    NetworkController.instance.sendMessage($"{itemType}:{i}");
+                    StringBuilder itemsStr = new StringBuilder(items);
+
+                    itemsStr[i] = '0';
+                    items = itemsStr.ToString();
+                    // itemsObj[i] = null;
+                    break;
+                }
+            }
+        }
     }
 
     IEnumerator Player2Shooting() {
@@ -200,12 +241,10 @@ public class GameController : MonoBehaviour
                             string itemStr, int time) {
         player1.setState(posX1, posY1, rot1, hp1, isShot1, power1);
         player2.setState(posX2, posY2, rot2, hp2, isShot2, power2);
+        
         items = itemStr;
         m_timeRemain = time;
 
-    }
-    public Player1 getPlayer(){
-        return player1;
     }
 
 

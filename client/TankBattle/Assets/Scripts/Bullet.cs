@@ -28,8 +28,8 @@ public class Bullet : MonoBehaviour
         // }
     }
 
-    private void OnCollisionEnter2D(Collision2D col) {
-        if(col.gameObject.CompareTag("StaticObject")){
+    private void OnTriggerEnter2D(Collider2D col) {
+        if(col.CompareTag("StaticObject")){
             Destroy(gameObject);
         }
     }

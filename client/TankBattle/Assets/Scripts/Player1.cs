@@ -13,18 +13,25 @@ public class Player1 : MonoBehaviour
     float xDirection, yDirection;
     // Start is called before the first frame update
     protected bool isLocal;
-    
+    protected GameController m_gc;
     // protected Player1 singleton;
     public HealthBar healthBar;
     public ManaBar manaBar;
-    void Start()
-    {
-        m_powerElapsed= 0;
-        m_hp = 50;
-        currentHP = m_hp;  // = max hp
+    void Awake() {
         posX = -7.5f;
         posY = -3.5f;
         rot = 0.0f;
+    }
+
+    void Start()
+    {
+        m_gc = FindObjectOfType<GameController>();
+        m_powerElapsed= 0;
+        m_hp = 50;
+        currentHP = m_hp;  // = max hp
+        // posX = -7.5f;
+        // posY = -3.5f;
+        // rot = 0.0f;
         numShot = 0;
 
         healthBar.SetMaxHealth(m_hp);
@@ -142,5 +149,39 @@ public class Player1 : MonoBehaviour
         this.healthBar.SetHealth(this.m_hp);
         this.manaBar.SetMana(this.m_powerElapsed);
         // Debug.Log($"HP: {this.m_hp}");
+    }
+
+    // protected void OnCollisionEnter2D(Collision2D col) {
+    //     if (isLocal) {
+            
+    //     }
+   
+    // }
+
+    protected void OnTriggerEnter2D(Collider2D col) {
+        
+            if(col.CompareTag("bullet")){
+                if (isLocal)
+                    NetworkController.instance.sendMessage("HIT1");
+                Destroy(col.gameObject);
+            }
+
+            if(col.CompareTag("bulletV2")){
+                if (isLocal)
+                    NetworkController.instance.sendMessage("HIT2");
+                Destroy(col.gameObject);
+            }
+
+            if(col.CompareTag("hpItem")){
+                if (isLocal) 
+                    m_gc.SendGetItem("UPHP", col.gameObject.GetInstanceID());
+            }
+
+            if(col.CompareTag("powerItem")){
+                if (isLocal) 
+                    m_gc.SendGetItem("UPAT", col.gameObject.GetInstanceID());
+            }
+        
+        // Destroy(col.gameObject);
     }
 }

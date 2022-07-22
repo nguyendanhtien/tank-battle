@@ -13,7 +13,7 @@
 
 #define MAX_MSG_LEN 128
 #define USER_CAPACITY 256
-#define MAX_GAME_TIME 60
+#define MAX_GAME_TIME 180
 #define MAX_POWER_TIME 10
 #define MAX_HP 50
 struct PlayerStruct {
@@ -126,7 +126,7 @@ Player* player_init(int id){
         temp->coord[2] = 0;
     } else {
         temp->coord[0] = 7.5;
-        temp->coord[1] = 3.5;
+        temp->coord[1] = 2.8;
         temp->coord[2] = 180;
     }
     temp->is_shot = 0;
@@ -293,7 +293,7 @@ void *run_game(void *room_info) {
                                 gameend = 0;
                                 is_cont[0] = -1;
                                 is_cont[1] = -1;
-                                sprintf(items_state, "11111");
+                                sprintf(items_state, "111111");
                                 break;
                             } else
                                 continue;
@@ -319,21 +319,29 @@ void *run_game(void *room_info) {
                             }
                         }
 
-                        if (!strcmp(msg_type, "GHIT")) {
+                        if (!strcmp(msg_type, "HIT1")) {
                             if (i == 0) {
-                                if (p2->power_elapsed)
-                                    p1->hp -= 3;
-                                else
-                                    p1->hp--;
+                            
+                                p1->hp--;
                                 p1->hp = max(p1->hp, 0);
                             } else {
-                                if (p1->power_elapsed)
-                                    p2->hp -= 3;
-                                else
-                                    p2->hp--;
+                            
+                                p2->hp--;
                                 p2->hp = max(p2->hp, 0);
                             }
-                        }
+                        } 
+
+                        if (!strcmp(msg_type, "HIT2")) {
+                            if (i == 0) {
+                            
+                                p1->hp -= 5;
+                                p1->hp = max(p1->hp, 0);
+                            } else {
+                            
+                                p2->hp -= 5;
+                                p2->hp = max(p2->hp, 0);
+                            }
+                        } 
 
                         if (!strcmp(msg_type, "SHOT")) {
                             if (i == 0) {
@@ -349,10 +357,10 @@ void *run_game(void *room_info) {
                             item_id_str[1] = '\0';
                             int item_id = atoi(item_id_str);
                             if (i == 0) {
-                                p1->hp++;
+                                p1->hp += 5;
                                 p1->hp = min(p1->hp, MAX_HP);
                             } else {
-                                p2->hp++;
+                                p2->hp += 5;
                                 p2->hp = min(p2->hp, MAX_HP);
                             }
                             items_state[item_id] = '0';
