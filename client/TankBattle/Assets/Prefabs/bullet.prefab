@@ -93,7 +93,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4600755074130751196}
-  m_BodyType: 1
+  m_BodyType: 0
   m_Simulated: 1
   m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
@@ -134,5 +134,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05bb90fcd9b8005e0babfd0b030e6975, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 10
-  timetoDestroy: 5
+  speed: 5
+  timetoDestroy: 8

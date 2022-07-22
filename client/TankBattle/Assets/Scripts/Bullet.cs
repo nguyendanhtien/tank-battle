@@ -20,7 +20,7 @@ public class Bullet : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         m_rb.AddForce(m_rb.transform.up* speed);
         // if(transform.position.y >160){
@@ -29,9 +29,16 @@ public class Bullet : MonoBehaviour
     }
 
     private void OnCollisionEnter2D(Collision2D col) {
-        if(col.gameObject.CompareTag("StaticObject")){
-            Debug.Log("Bullet Hit Obstacle");
+        if( col.gameObject.CompareTag("StaticObject")) {
+            // Debug.Log("Bullet Hit Obstacle");
             Destroy(gameObject);
+        }
+        if(col.gameObject.CompareTag("hpItem")) {
+            Physics2D.IgnoreCollision(col.gameObject.GetComponent<BoxCollider2D>(), GetComponent<CircleCollider2D>());
+        }
+
+        if(col.gameObject.CompareTag("powerItem")) {
+            Physics2D.IgnoreCollision(col.gameObject.GetComponent<BoxCollider2D>(), GetComponent<CircleCollider2D>());
         }
     }
 }

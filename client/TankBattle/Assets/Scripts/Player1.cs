@@ -14,6 +14,8 @@ public class Player1 : MonoBehaviour
     // Start is called before the first frame update
     protected bool isLocal;
     protected GameController m_gc;
+
+    protected Rigidbody2D m_rb;
     // protected Player1 singleton;
     public HealthBar healthBar;
     public ManaBar manaBar;
@@ -21,6 +23,7 @@ public class Player1 : MonoBehaviour
         posX = -7.5f;
         posY = -3.5f;
         rot = 0.0f;
+        m_rb = GetComponent<Rigidbody2D>();
     }
 
     void Start()
@@ -52,6 +55,21 @@ public class Player1 : MonoBehaviour
         return numShot;
     }
 
+    protected void Update() {
+        
+        if(Input.GetKeyDown(KeyCode.Space)){
+            if (isLocal) {
+                NetworkController.instance.sendShootMessage();
+                
+                if(this.m_powerElapsed > 0){
+                    
+                    ShootLv2();
+                } else{
+                    Shoot();
+                }         
+            }
+        }
+    }
     
     // Update is called once per frame
     protected void FixedUpdate()
@@ -63,23 +81,19 @@ public class Player1 : MonoBehaviour
         // float ymoveStep = moveSpeed*yDirection*Time.deltaTime;
         
         if(isLocal){
+            Debug.Log("AAA");
             move = Input.GetAxis("Vertical") *moveSpeed * Time.deltaTime;
             rotation = Input.GetAxis("Horizontal") * -rotationSpeed *Time.deltaTime;
-                
-
-            if(Input.GetKeyDown(KeyCode.Space)){
-                NetworkController.instance.sendShootMessage();
-                
-                if(this.m_powerElapsed > 0){
-                   
-                    ShootLv2();
-                } else{
-                    Shoot();
-                }         
-            }
+            Vector2 moveDirection = new Vector2(0.0f, move);
+            Vector3 rotatedDirection = Quaternion.AngleAxis(m_rb.rotation, Vector3.forward) * moveDirection;
+            float new_posX = m_rb.position.x + rotatedDirection.x;
+            float new_posY = m_rb.position.y + rotatedDirection.y;
+            m_rb.MovePosition(new Vector2(new_posX, new_posY));
+            m_rb.MoveRotation(m_rb.rotation + rotation);
+            if (move != 0 || rotation != 0) 
+                NetworkController.instance.sendMoveData(m_rb.position.x, m_rb.position.y, m_rb.rotation);
         }
-
-
+        // Vector2 new_position = Vector2.MoveTowards(m_rb.position, )
         
         // if(xDirection == 1){
         //     transform.Rotate(-Vector3.forward*180*Time.deltaTime);
@@ -87,12 +101,12 @@ public class Player1 : MonoBehaviour
         //     transform.Rotate(Vector3.forward*180*Time.deltaTime);
     }
 
-    protected void LateUpdate() {
-        transform.Translate(0, move, 0);
-        transform.Rotate(0,0,rotation);
-        if (move != 0 || rotation != 0) 
-            NetworkController.instance.sendMoveData(transform.position.x, transform.position.y, transform.rotation.eulerAngles.z);
-    }
+    // protected void LateUpdate() {
+    //     transform.Translate(0, move, 0);
+    //     transform.Rotate(0,0,rotation);
+    //     if (move != 0 || rotation != 0) 
+    //         NetworkController.instance.sendMoveData(transform.position.x, transform.position.y, transform.rotation.eulerAngles.z);
+    // }
 
     public void Move(){
 

@@ -8,6 +8,7 @@ public class Player2 : Player1
         posX = 7.5f;
         posY = 2.8f;
         rot = 180f;
+        m_rb = GetComponent<Rigidbody2D>();
     }
     
     // Start is called before the first frame update

@@ -370,7 +370,11 @@ public class NetworkController : MonoBehaviour
     public void GetGameState() {
 
         waitGameStartSignalThread.Abort();
-        waitServerResponseThread.Abort();
+        try {
+            waitServerResponseThread.Abort();
+        } catch {
+            Debug.Log("Err");
+        }
 
         byte[] data = new byte[BUFFER_SIZE];
         string strData = "";

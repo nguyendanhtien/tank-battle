@@ -29,6 +29,7 @@ public class GameController : MonoBehaviour
         m_ui = FindObjectOfType<UIManager>();
         
         m_ui.ShowConnectionGUI(true);
+        // StartGame();
         
     }
 
