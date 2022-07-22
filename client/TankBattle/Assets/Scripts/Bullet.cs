@@ -28,8 +28,9 @@ public class Bullet : MonoBehaviour
         // }
     }
 
-    private void OnTriggerEnter2D(Collider2D col) {
-        if(col.CompareTag("StaticObject")){
+    private void OnCollisionEnter2D(Collision2D col) {
+        if(col.gameObject.CompareTag("StaticObject")){
+            Debug.Log("Bullet Hit Obstacle");
             Destroy(gameObject);
         }
     }

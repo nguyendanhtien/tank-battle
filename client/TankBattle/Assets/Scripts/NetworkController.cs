@@ -24,7 +24,7 @@ public class NetworkController : MonoBehaviour
     GameController gameController;
     UIManager m_ui;
     // Enemy enemy;
-
+    private int CONNECTION_TIMEOUT=2;
 
     void Awake()
 	{
@@ -49,8 +49,18 @@ public class NetworkController : MonoBehaviour
         {
             IPAddress address = IPAddress.Parse(m_ui.getIpServer());
             TcpClient client = new TcpClient();
-            client.Connect(address, PORT_NUMBER);
+            
+            var result = client.BeginConnect(address, PORT_NUMBER, null, null);
+
+            var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(CONNECTION_TIMEOUT));
+
+            if (!success)
+            {
+                throw new Exception("Connection Timeout");
+            }
+
             stream = client.GetStream();
+            // stream.ReadTimeout = CONNECTION_TIMEOUT;
             StartCoroutine(GetServerMessage((message) => {
                 LogMessageFromServer(message);
             }));
@@ -67,7 +77,6 @@ public class NetworkController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
     }
 
     public void sendMessage(string message) {
@@ -494,7 +503,6 @@ public class NetworkController : MonoBehaviour
         }
         Debug.Log("In Game Thread terminated");
         ingameThread.Abort();
-        ingameThread.Join();
     }
 
     IEnumerator GetRandomPlayResponse(System.Action<bool, int, int> callbackOnFinish) {
@@ -578,7 +586,8 @@ public class NetworkController : MonoBehaviour
     }
 
     IEnumerator GetServerMessage(System.Action<string> callbackOnFinish) {
-        yield return new WaitForSeconds(Time.deltaTime);
+     
+        yield return null;
         // Receive data
         
         byte[] data = new byte[BUFFER_SIZE];

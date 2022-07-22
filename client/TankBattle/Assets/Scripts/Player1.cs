@@ -54,7 +54,7 @@ public class Player1 : MonoBehaviour
 
     
     // Update is called once per frame
-    protected void Update()
+    protected void FixedUpdate()
     {
         // xDirection = Input.GetAxisRaw("Horizontal");
         // yDirection = Input.GetAxisRaw("Vertical");
@@ -158,26 +158,28 @@ public class Player1 : MonoBehaviour
    
     // }
 
-    protected void OnTriggerEnter2D(Collider2D col) {
+    protected void OnCollisionEnter2D(Collision2D col) {
         
-            if(col.CompareTag("bullet")){
+            if(col.gameObject.CompareTag("bullet")){
                 if (isLocal)
                     NetworkController.instance.sendMessage("HIT1");
+                Debug.Log($"Bullet Hit Player with isLocal: {isLocal}");
                 Destroy(col.gameObject);
             }
 
-            if(col.CompareTag("bulletV2")){
+            if(col.gameObject.CompareTag("bulletV2")){
                 if (isLocal)
                     NetworkController.instance.sendMessage("HIT2");
+                Debug.Log($"Bullet Hit Player with isLocal: {isLocal}");
                 Destroy(col.gameObject);
             }
 
-            if(col.CompareTag("hpItem")){
+            if(col.gameObject.CompareTag("hpItem")){
                 if (isLocal) 
                     m_gc.SendGetItem("UPHP", col.gameObject.GetInstanceID());
             }
 
-            if(col.CompareTag("powerItem")){
+            if(col.gameObject.CompareTag("powerItem")){
                 if (isLocal) 
                     m_gc.SendGetItem("UPAT", col.gameObject.GetInstanceID());
             }

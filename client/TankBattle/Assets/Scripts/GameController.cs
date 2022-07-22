@@ -36,10 +36,7 @@ public class GameController : MonoBehaviour
     void Update()
     {
     
-        m_ui.SetTimeText(m_timeRemain);
-        if(isGameStarted){
-            RenderGame();
-        }
+        
         
         
     }
@@ -49,7 +46,10 @@ public class GameController : MonoBehaviour
     }
 
     private void FixedUpdate() {
-        
+        m_ui.SetTimeText(m_timeRemain);
+        if(isGameStarted){
+            RenderGame();
+        }
     }
 
     public void setGameStart() {
